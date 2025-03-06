@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Waiter's Order Scanner</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+  </head>
+  <body>
+    <h1>Scan Customer's QR Code</h1>
+    <video
+      id="scanner"
+      width="300"
+      height="200"
+      style="border: 1px solid #ccc"
+    ></video>
+    <div id="orderDetails" style="margin-top: 20px"></div>
+
+    <script>
+      const video = document.getElementById("scanner");
+      const orderDetails = document.getElementById("orderDetails");
+
+      // Access the camera and start scanning
+      navigator.mediaDevices
+        .getUserMedia({ video: { facingMode: "environment" } })
+        .then(function (stream) {
+          video.srcObject = stream;
+          video.setAttribute("playsinline", true); // required to tell iOS safari we don't want fullscreen
+          video.play();
+          requestAnimationFrame(tick);
+        });
+
+      function tick() {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          const canvas = document.createElement("canvas");
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const context = canvas.getContext("2d");
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const imageData = context.getImageData(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+          );
+          const code = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: "dontInvert",
+          });
+
+          if (code) {
+            // Decode the QR code and display order details
+            const orderData = JSON.parse(code.data);
+            displayOrderDetails(orderData);
+          }
+        }
+        requestAnimationFrame(tick);
+      }
+
+      function displayOrderDetails(orderData) {
+        let itemsHtml = "";
+        orderData.items.forEach((item) => {
+          itemsHtml += `
+                    <div>
+                        <strong>${item.name}</strong> (${
+            item.isVeg ? "Veg" : "Non-Veg"
+          })<br>
+                        Quantity: ${item.quantity}<br>
+                        Price: ₹${item.price.toFixed(2)}<br>
+                        Total: ₹${(item.price * item.quantity).toFixed(2)}
+                    </div>
+                    <hr>
+                `;
+        });
+
+        orderDetails.innerHTML = `
+                <h2>Order Details</h2>
+                ${itemsHtml}
+                <div><strong>Subtotal:</strong> ₹${orderData.subtotal.toFixed(
+                  2
+                )}</div>
+                <div><strong>Total:</strong> ₹${orderData.total.toFixed(
+                  2
+                )}</div>
+                <div><strong>Order Time:</strong> ${orderData.timestamp}</div>
+            `;
+      }
+    </script>
+  </body>
+</html>
