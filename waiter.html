@@ -1,89 +1,457 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Waiter's Order Scanner</title>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
-  </head>
-  <body>
-    <h1>Scan Customer's QR Code</h1>
-    <video
-      id="scanner"
-      width="300"
-      height="200"
-      style="border: 1px solid #ccc"
-    ></video>
-    <div id="orderDetails" style="margin-top: 20px"></div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Waiter's Order Scanner</title>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      background-color: #f8f9fa;
+      color: #333;
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    h1 {
+      color: #1a73e8;
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    
+    .scan-subtitle {
+      color: #5f6368;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .scanner-container {
+      background-color: white;
+      border-radius: 12px;
+      padding: 15px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    #scanner {
+      border-radius: 8px;
+      width: 100%;
+      max-width: 400px;
+      height: auto;
+      border: 2px solid #e0e0e0;
+    }
+    
+    .scanner-overlay {
+      position: relative;
+      display: inline-block;
+    }
+    
+    .scanner-frame {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 2px solid #1a73e8;
+      border-radius: 8px;
+      pointer-events: none;
+      box-sizing: border-box;
+    }
+    
+    .scanner-corners {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-color: #1a73e8;
+      border-style: solid;
+      border-width: 4px;
+    }
+    
+    .corner-tl {
+      top: 10px;
+      left: 10px;
+      border-right: none;
+      border-bottom: none;
+      border-radius: 4px 0 0 0;
+    }
+    
+    .corner-tr {
+      top: 10px;
+      right: 10px;
+      border-left: none;
+      border-bottom: none;
+      border-radius: 0 4px 0 0;
+    }
+    
+    .corner-bl {
+      bottom: 10px;
+      left: 10px;
+      border-right: none;
+      border-top: none;
+      border-radius: 0 0 0 4px;
+    }
+    
+    .corner-br {
+      bottom: 10px;
+      right: 10px;
+      border-left: none;
+      border-top: none;
+      border-radius: 0 0 4px 0;
+    }
+    
+    .scanning-animation {
+      position: absolute;
+      width: 80%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #1a73e8, transparent);
+      top: 50%;
+      left: 10%;
+      animation: scan 2s infinite;
+    }
+    
+    @keyframes scan {
+      0% { top: 20%; }
+      50% { top: 80%; }
+      100% { top: 20%; }
+    }
+    
+    #orderDetails {
+      background-color: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      margin-top: 20px;
+    }
+    
+    #orderDetails.hidden {
+      display: none;
+    }
+    
+    h2 {
+      color: #1a73e8;
+      font-size: 20px;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .order-item {
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .item-name {
+      font-weight: 600;
+      font-size: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .veg-indicator {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      margin-left: 8px;
+      border: 1px solid;
+      border-radius: 2px;
+    }
+    
+    .veg {
+      border-color: green;
+    }
+    
+    .veg::after {
+      content: '';
+      display: block;
+      width: 8px;
+      height: 8px;
+      margin: 2px;
+      border-radius: 50%;
+      background-color: green;
+    }
+    
+    .non-veg {
+      border-color: red;
+    }
+    
+    .non-veg::after {
+      content: '';
+      display: block;
+      width: 8px;
+      height: 8px;
+      margin: 2px;
+      border-radius: 50%;
+      background-color: red;
+    }
+    
+    .item-details {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 5px;
+      color: #5f6368;
+      font-size: 14px;
+    }
+    
+    .item-price {
+      text-align: right;
+    }
+    
+    .totals {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 2px solid #e0e0e0;
+    }
+    
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+    
+    .grand-total {
+      font-weight: bold;
+      color: #1a73e8;
+      font-size: 18px;
+      margin-top: 10px;
+    }
+    
+    .timestamp {
+      margin-top: 15px;
+      text-align: right;
+      color: #5f6368;
+      font-size: 14px;
+    }
+    
+    .camera-btn {
+      background-color: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 200px;
+      margin: 15px auto;
+    }
+    
+    .camera-btn i {
+      margin-right: 8px;
+    }
+    
+    .camera-btn:hover {
+      background-color: #0d62d1;
+    }
+    
+    .no-orders {
+      color: #666;
+      text-align: center;
+      padding: 30px 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Waiter's Order Scanner</h1>
+    <p class="scan-subtitle">Scan the customer's QR code to view order details</p>
+  </header>
+  
+  <div class="scanner-container">
+    <div class="scanner-overlay">
+      <video id="scanner" autoplay playsinline></video>
+      <div class="scanner-frame">
+        <div class="scanner-corners corner-tl"></div>
+        <div class="scanner-corners corner-tr"></div>
+        <div class="scanner-corners corner-bl"></div>
+        <div class="scanner-corners corner-br"></div>
+        <div class="scanning-animation"></div>
+      </div>
+    </div>
+    <button id="cameraToggle" class="camera-btn">
+      <i class="fas fa-camera"></i> Activate Camera
+    </button>
+  </div>
+  
+  <div id="orderDetails" class="hidden">
+    <div class="no-orders">Scan a QR code to view order details</div>
+  </div>
 
-    <script>
-      const video = document.getElementById("scanner");
-      const orderDetails = document.getElementById("orderDetails");
-
-      // Access the camera and start scanning
+  <script>
+    const video = document.getElementById("scanner");
+    const orderDetails = document.getElementById("orderDetails");
+    const cameraToggle = document.getElementById("cameraToggle");
+    let scanning = false;
+    let stream = null;
+    
+    // Start with camera off and order details hidden
+    orderDetails.classList.add("hidden");
+    
+    cameraToggle.addEventListener("click", toggleCamera);
+    
+    function toggleCamera() {
+      if (scanning) {
+        // Turn off camera
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
+        scanning = false;
+        cameraToggle.innerHTML = '<i class="fas fa-camera"></i> Activate Camera';
+      } else {
+        // Turn on camera
+        startCamera();
+        cameraToggle.innerHTML = '<i class="fas fa-stop"></i> Stop Scanning';
+      }
+    }
+    
+    function startCamera() {
       navigator.mediaDevices
         .getUserMedia({ video: { facingMode: "environment" } })
-        .then(function (stream) {
+        .then(function (videoStream) {
+          stream = videoStream;
           video.srcObject = stream;
-          video.setAttribute("playsinline", true); // required to tell iOS safari we don't want fullscreen
+          video.setAttribute("playsinline", true); // required for iOS
           video.play();
+          scanning = true;
           requestAnimationFrame(tick);
+        })
+        .catch(function(error) {
+          console.error("Could not access the camera: ", error);
+          alert("Could not access the camera. Please ensure you've granted camera permission.");
         });
-
-      function tick() {
-        if (video.readyState === video.HAVE_ENOUGH_DATA) {
-          const canvas = document.createElement("canvas");
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          const context = canvas.getContext("2d");
-          context.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const imageData = context.getImageData(
-            0,
-            0,
-            canvas.width,
-            canvas.height
-          );
+    }
+    
+    function tick() {
+      if (!scanning) return;
+      
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext("2d");
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = context.getImageData(
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+        
+        try {
           const code = jsQR(imageData.data, imageData.width, imageData.height, {
             inversionAttempts: "dontInvert",
           });
-
+          
           if (code) {
-            // Decode the QR code and display order details
-            const orderData = JSON.parse(code.data);
-            displayOrderDetails(orderData);
+            // Successfully scanned QR code
+            try {
+              const orderData = JSON.parse(code.data);
+              displayOrderDetails(orderData);
+              // Optional: pause scanning after successful scan
+              // toggleCamera();
+            } catch (e) {
+              console.error("Invalid QR code format: ", e);
+            }
           }
+        } catch (error) {
+          console.error("Error scanning QR code: ", error);
         }
-        requestAnimationFrame(tick);
       }
-
-      function displayOrderDetails(orderData) {
-        let itemsHtml = "";
-        orderData.items.forEach((item) => {
-          itemsHtml += `
-                    <div>
-                        <strong>${item.name}</strong> (${
-            item.isVeg ? "Veg" : "Non-Veg"
-          })<br>
-                        Quantity: ${item.quantity}<br>
-                        Price: ₹${item.price.toFixed(2)}<br>
-                        Total: ₹${(item.price * item.quantity).toFixed(2)}
-                    </div>
-                    <hr>
-                `;
-        });
-
+      
+      requestAnimationFrame(tick);
+    }
+    
+    function displayOrderDetails(orderData) {
+      if (!orderData || !orderData.items || !Array.isArray(orderData.items)) {
         orderDetails.innerHTML = `
-                <h2>Order Details</h2>
-                ${itemsHtml}
-                <div><strong>Subtotal:</strong> ₹${orderData.subtotal.toFixed(
-                  2
-                )}</div>
-                <div><strong>Total:</strong> ₹${orderData.total.toFixed(
-                  2
-                )}</div>
-                <div><strong>Order Time:</strong> ${orderData.timestamp}</div>
-            `;
+          <div class="no-orders">Invalid order data</div>
+        `;
+        orderDetails.classList.remove("hidden");
+        return;
       }
-    </script>
-  </body>
+      
+      let itemsHtml = "";
+      let subtotal = 0;
+      
+      orderData.items.forEach((item) => {
+        const itemTotal = item.price * item.quantity;
+        subtotal += itemTotal;
+        
+        itemsHtml += `
+          <div class="order-item">
+            <div class="item-name">
+              ${item.name}
+              <span class="veg-indicator ${item.isVeg ? 'veg' : 'non-veg'}"></span>
+            </div>
+            <div class="item-details">
+              <span>Quantity: ${item.quantity}</span>
+              <span class="item-price">₹${item.price.toFixed(2)}</span>
+            </div>
+            <div class="item-details">
+              <span>Item Total:</span>
+              <span class="item-price">₹${itemTotal.toFixed(2)}</span>
+            </div>
+          </div>
+        `;
+      });
+      
+      // Use the provided totals or calculate them
+      const total = orderData.total || subtotal;
+      const tax = total - subtotal;
+      
+      const timestamp = orderData.timestamp || new Date().toLocaleString();
+      
+      orderDetails.innerHTML = `
+        <h2>Order Details</h2>
+        ${itemsHtml}
+        <div class="totals">
+          <div class="total-row">
+            <span>Subtotal:</span>
+            <span>₹${orderData.subtotal.toFixed(2)}</span>
+          </div>
+          ${tax > 0 ? `
+          <div class="total-row">
+            <span>Tax/Charges:</span>
+            <span>₹${tax.toFixed(2)}</span>
+          </div>
+          ` : ''}
+          <div class="total-row grand-total">
+            <span>Total Amount:</span>
+            <span>₹${orderData.total.toFixed(2)}</span>
+          </div>
+        </div>
+        <div class="timestamp">
+          <i class="fas fa-clock"></i> ${timestamp}
+        </div>
+      `;
+      
+      orderDetails.classList.remove("hidden");
+      
+      // Add audio feedback for successful scan
+      const audio = new Audio("data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAZAANTU1NTU1NTU1NTU1NTU1NTU1NTWMjIyMjIyMjIyMjIyMjIyMjIyMjMPDw8PDw8PDw8PDw8PDw8PDw8MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/+MYxAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=");
+      audio.play();
+    }
+  </script>
+</body>
 </html>
