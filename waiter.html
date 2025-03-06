@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Waiter's Order Scanner</title>
+  <title>Waiter's Order Management System</title>
   <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
   <style>
@@ -18,7 +18,7 @@
       background-color: #f8f9fa;
       color: #333;
       padding: 20px;
-      max-width: 600px;
+      max-width: 800px;
       margin: 0 auto;
     }
     
@@ -33,18 +33,49 @@
       margin-bottom: 8px;
     }
     
-    .scan-subtitle {
+    .subtitle {
       color: #5f6368;
       font-size: 16px;
       margin-bottom: 20px;
     }
     
-    .scanner-container {
+    .card {
       background-color: white;
       border-radius: 12px;
       padding: 15px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       margin-bottom: 20px;
+    }
+    
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      font-weight: 500;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s;
+    }
+    
+    .tab.active {
+      color: #1a73e8;
+      border-bottom-color: #1a73e8;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* Scanner Styles */
+    .scanner-container {
       text-align: center;
     }
     
@@ -130,16 +161,9 @@
       100% { top: 20%; }
     }
     
+    /* Order Details Styles */
     #orderDetails {
-      background-color: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       margin-top: 20px;
-    }
-    
-    #orderDetails.hidden {
-      display: none;
     }
     
     h2 {
@@ -240,7 +264,7 @@
       font-size: 14px;
     }
     
-    .camera-btn {
+    .btn {
       background-color: #1a73e8;
       color: white;
       border: none;
@@ -248,210 +272,1138 @@
       padding: 10px 20px;
       font-size: 16px;
       cursor: pointer;
-      margin-top: 15px;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 100%;
-      max-width: 200px;
-      margin: 15px auto;
+      transition: background-color 0.3s;
     }
     
-    .camera-btn i {
+    .btn i {
       margin-right: 8px;
     }
     
-    .camera-btn:hover {
+    .btn:hover {
       background-color: #0d62d1;
     }
     
-    .no-orders {
+    .btn.secondary {
+      background-color: #5f6368;
+    }
+    
+    .btn.secondary:hover {
+      background-color: #484b4f;
+    }
+    
+    .btn.success {
+      background-color: #34a853;
+    }
+    
+    .btn.success:hover {
+      background-color: #2d8e46;
+    }
+    
+    .btn.danger {
+      background-color: #ea4335;
+    }
+    
+    .btn.danger:hover {
+      background-color: #d33426;
+    }
+    
+    .btn-container {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      justify-content: center;
+    }
+    
+    .centered {
+      text-align: center;
+    }
+    
+    .no-content {
       color: #666;
       text-align: center;
       padding: 30px 0;
+    }
+    
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #5f6368;
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    
+    .form-row {
+      display: flex;
+      gap: 15px;
+    }
+    
+    .form-col {
+      flex: 1;
+    }
+    
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      margin-top: 5px;
+    }
+    
+    .checkbox-container input {
+      width: auto;
+      margin-right: 10px;
+    }
+    
+    /* Food Menu Styles */
+    .menu-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .menu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .menu-item:last-child {
+      border-bottom: none;
+    }
+    
+    .menu-item-details {
+      flex: 1;
+    }
+    
+    .menu-item-name {
+      font-weight: 500;
+    }
+    
+    .menu-item-price {
+      color: #5f6368;
+      font-size: 14px;
+    }
+    
+    .menu-item-actions {
+      display: flex;
+      gap: 5px;
+    }
+    
+    .action-btn {
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+      color: #5f6368;
+      font-size: 16px;
+      padding: 5px;
+      transition: color 0.3s;
+    }
+    
+    .action-btn:hover {
+      color: #1a73e8;
+    }
+    
+    .action-btn.delete:hover {
+      color: #ea4335;
+    }
+    
+    /* Current Order Styles */
+    .current-order {
+      margin-top: 20px;
+    }
+    
+    .table-selection {
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .quantity-control {
+      display: flex;
+      align-items: center;
+    }
+    
+    .quantity-btn {
+      background-color: #f0f0f0;
+      border: none;
+      border-radius: 50%;
+      width: 25px;
+      height: 25px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .quantity-input {
+      width: 40px;
+      text-align: center;
+      margin: 0 5px;
+      padding: 2px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+    }
+    
+    /* Bill Styles */
+    .bill-container {
+      background-color: white;
+      padding: 20px;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    
+    .bill-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .bill-restaurant-name {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .bill-restaurant-address {
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .bill-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+    
+    .bill-details {
+      border-top: 1px dashed #ccc;
+      border-bottom: 1px dashed #ccc;
+      padding: 10px 0;
+      margin-bottom: 10px;
+    }
+    
+    .bill-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+      font-size: 14px;
+    }
+    
+    .bill-total {
+      font-weight: bold;
+      text-align: right;
+      margin-top: 10px;
+      font-size: 16px;
+    }
+    
+    .bill-thank-you {
+      text-align: center;
+      margin-top: 20px;
+      font-style: italic;
+      color: #666;
+    }
+    
+    .qr-code-container {
+      text-align: center;
+      margin: 20px 0;
+    }
+    
+    .qr-code {
+      max-width: 100%;
+      height: auto;
+    }
+    
+    /* Print Styles */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #billPrintArea, #billPrintArea * {
+        visibility: visible;
+      }
+      #billPrintArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+      .no-print {
+        display: none !important;
+      }
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>Waiter's Order Scanner</h1>
-    <p class="scan-subtitle">Scan the customer's QR code to view order details</p>
+    <h1>Waiter's Order Management System</h1>
+    <p class="subtitle">Manage food items, create orders, and generate bills</p>
   </header>
   
-  <div class="scanner-container">
-    <div class="scanner-overlay">
-      <video id="scanner" autoplay playsinline></video>
-      <div class="scanner-frame">
-        <div class="scanner-corners corner-tl"></div>
-        <div class="scanner-corners corner-tr"></div>
-        <div class="scanner-corners corner-bl"></div>
-        <div class="scanner-corners corner-br"></div>
-        <div class="scanning-animation"></div>
-      </div>
-    </div>
-    <button id="cameraToggle" class="camera-btn">
-      <i class="fas fa-camera"></i> Activate Camera
-    </button>
+  <div class="tabs">
+    <div class="tab active" data-tab="menuTab">Menu Management</div>
+    <div class="tab" data-tab="orderTab">Create Order</div>
+    <div class="tab" data-tab="scannerTab">QR Scanner</div>
+    <div class="tab" data-tab="billTab">Generate Bill</div>
   </div>
   
-  <div id="orderDetails" class="hidden">
-    <div class="no-orders">Scan a QR code to view order details</div>
+  <!-- Menu Management Tab -->
+  <div class="tab-content active" id="menuTab">
+    <div class="card">
+      <h2>Menu Items</h2>
+      <div id="menuList" class="menu-list">
+        <div class="no-content">No menu items added yet</div>
+      </div>
+      
+      <h2 style="margin-top: 20px;">Add New Item</h2>
+      <div class="form-group">
+        <label for="itemName">Item Name</label>
+        <input type="text" id="itemName" placeholder="Enter item name">
+      </div>
+      
+      <div class="form-row">
+        <div class="form-col">
+          <div class="form-group">
+            <label for="itemPrice">Price (₹)</label>
+            <input type="number" id="itemPrice" placeholder="0.00" min="0" step="0.01">
+          </div>
+        </div>
+        <div class="form-col">
+          <div class="form-group">
+            <label for="itemCategory">Category</label>
+            <select id="itemCategory">
+              <option value="starter">Starter</option>
+              <option value="mainCourse">Main Course</option>
+              <option value="dessert">Dessert</option>
+              <option value="beverage">Beverage</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <div class="checkbox-container">
+          <input type="checkbox" id="itemIsVeg" checked>
+          <label for="itemIsVeg">Vegetarian</label>
+        </div>
+      </div>
+      
+      <div class="btn-container">
+        <button id="addItemBtn" class="btn success">
+          <i class="fas fa-plus"></i> Add Item
+        </button>
+      </div>
+    </div>
   </div>
+  
+  <!-- Create Order Tab -->
+  <div class="tab-content" id="orderTab">
+    <div class="card">
+      <div class="table-selection">
+        <div class="form-group">
+          <label for="tableNumber">Table Number</label>
+          <input type="number" id="tableNumber" min="1" value="1">
+        </div>
+      </div>
+      
+      <h2>Menu</h2>
+      <div id="orderMenuList" class="menu-list">
+        <div class="no-content">No menu items available</div>
+      </div>
+      
+      <h2 style="margin-top: 20px;">Current Order</h2>
+      <div id="currentOrderItems">
+        <div class="no-content">No items added to order</div>
+      </div>
+      
+      <div class="totals" id="orderTotals" style="display: none;">
+        <div class="total-row">
+          <span>Subtotal:</span>
+          <span id="orderSubtotal">₹0.00</span>
+        </div>
+        <div class="total-row">
+          <span>Tax (5%):</span>
+          <span id="orderTax">₹0.00</span>
+        </div>
+        <div class="total-row grand-total">
+          <span>Total Amount:</span>
+          <span id="orderTotal">₹0.00</span>
+        </div>
+      </div>
+      
+      <div class="btn-container">
+        <button id="clearOrderBtn" class="btn danger">
+          <i class="fas fa-trash"></i> Clear Order
+        </button>
+        <button id="saveOrderBtn" class="btn success">
+          <i class="fas fa-save"></i> Save Order
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- QR Scanner Tab -->
+  <div class="tab-content" id="scannerTab">
+    <div class="card">
+      <h2>Scan Order QR Code</h2>
+      <p class="centered subtitle">Scan a QR code to retrieve order details</p>
+      
+      <div class="scanner-container">
+        <div class="scanner-overlay">
+          <video id="scanner" autoplay playsinline></video>
+          <div class="scanner-frame">
+            <div class="scanner-corners corner-tl"></div>
+            <div class="scanner-corners corner-tr"></div>
+            <div class="scanner-corners corner-bl"></div>
+            <div class="scanner-corners corner-br"></div>
+            <div class="scanning-animation"></div>
+          </div>
+        </div>
+        <div class="btn-container">
+          <button id="cameraToggle" class="btn">
+            <i class="fas fa-camera"></i> Activate Camera
+          </button>
+        </div>
+      </div>
+      
+      <div id="scanOrderDetails" class="hidden">
+        <div class="no-content">Scan a QR code to view order details</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Generate Bill Tab -->
+  <div class="tab-content" id="billTab">
+    <div class="card">
+      <h2>Generate Bill</h2>
+      
+      <div class="form-group">
+        <label for="billOrderSelect">Select Order</label>
+        <select id="billOrderSelect">
+          <option value="">-- Select an order --</option>
+        </select>
+      </div>
+      
+      <div id="billPreview">
+        <div class="no-content">Select an order to generate bill</div>
+      </div>
+      
+      <div id="billActions" class="btn-container" style="display: none;">
+        <button id="generateQrBtn" class="btn">
+          <i class="fas fa-qrcode"></i> Generate QR
+        </button>
+        <button id="printBillBtn" class="btn success">
+          <i class="fas fa-print"></i> Print Bill
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Bill Print Area (Hidden until print) -->
+  <div id="billPrintArea" style="display: none;"></div>
 
   <script>
-    const video = document.getElementById("scanner");
-    const orderDetails = document.getElementById("orderDetails");
-    const cameraToggle = document.getElementById("cameraToggle");
+    // DOM Elements
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const menuList = document.getElementById('menuList');
+    const orderMenuList = document.getElementById('orderMenuList');
+    const currentOrderItems = document.getElementById('currentOrderItems');
+    const orderTotals = document.getElementById('orderTotals');
+    const orderSubtotal = document.getElementById('orderSubtotal');
+    const orderTax = document.getElementById('orderTax');
+    const orderTotal = document.getElementById('orderTotal');
+    const billOrderSelect = document.getElementById('billOrderSelect');
+    const billPreview = document.getElementById('billPreview');
+    const billActions = document.getElementById('billActions');
+    const billPrintArea = document.getElementById('billPrintArea');
+    const scanOrderDetails = document.getElementById('scanOrderDetails');
+    
+    // Tab Navigation
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tabContents.forEach(tc => tc.classList.remove('active'));
+        
+        tab.classList.add('active');
+        const tabId = tab.getAttribute('data-tab');
+        document.getElementById(tabId).classList.add('active');
+        
+        // If scanner tab is selected, start camera
+        if (tabId === 'scannerTab' && !scanning) {
+          // Don't auto-start camera
+        }
+      });
+    });
+    
+    // Form Elements
+    const itemNameInput = document.getElementById('itemName');
+    const itemPriceInput = document.getElementById('itemPrice');
+    const itemCategoryInput = document.getElementById('itemCategory');
+    const itemIsVegInput = document.getElementById('itemIsVeg');
+    const addItemBtn = document.getElementById('addItemBtn');
+    const tableNumberInput = document.getElementById('tableNumber');
+    const clearOrderBtn = document.getElementById('clearOrderBtn');
+    const saveOrderBtn = document.getElementById('saveOrderBtn');
+    const generateQrBtn = document.getElementById('generateQrBtn');
+    const printBillBtn = document.getElementById('printBillBtn');
+    
+    // Scanner Elements
+    const video = document.getElementById('scanner');
+    const cameraToggle = document.getElementById('cameraToggle');
     let scanning = false;
     let stream = null;
     
-    // Start with camera off and order details hidden
-    orderDetails.classList.add("hidden");
+    // Data Storage
+    let menuItems = JSON.parse(localStorage.getItem('menuItems')) || [];
+    let currentOrder = {
+      tableNumber: 1,
+      items: [],
+      subtotal: 0,
+      tax: 0,
+      total: 0,
+      timestamp: new Date().toLocaleString()
+    };
+    let savedOrders = JSON.parse(localStorage.getItem('savedOrders')) || [];
     
-    cameraToggle.addEventListener("click", toggleCamera);
+    // Initialize the application
+    initializeApp();
     
-    function toggleCamera() {
-      if (scanning) {
-        // Turn off camera
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
-        }
-        scanning = false;
-        cameraToggle.innerHTML = '<i class="fas fa-camera"></i> Activate Camera';
-      } else {
-        // Turn on camera
-        startCamera();
-        cameraToggle.innerHTML = '<i class="fas fa-stop"></i> Stop Scanning';
-      }
-    }
-    
-    function startCamera() {
-      navigator.mediaDevices
-        .getUserMedia({ video: { facingMode: "environment" } })
-        .then(function (videoStream) {
-          stream = videoStream;
-          video.srcObject = stream;
-          video.setAttribute("playsinline", true); // required for iOS
-          video.play();
-          scanning = true;
-          requestAnimationFrame(tick);
-        })
-        .catch(function(error) {
-          console.error("Could not access the camera: ", error);
-          alert("Could not access the camera. Please ensure you've granted camera permission.");
-        });
-    }
-    
-    function tick() {
-      if (!scanning) return;
+    function initializeApp() {
+      // Load menu items
+      renderMenuItems();
+      renderOrderMenuItems();
+      renderOrderSelect();
       
-      if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        const canvas = document.createElement("canvas");
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const context = canvas.getContext("2d");
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageData = context.getImageData(
-          0,
-          0,
-          canvas.width,
-          canvas.height
-        );
-        
-        try {
-          const code = jsQR(imageData.data, imageData.width, imageData.height, {
-            inversionAttempts: "dontInvert",
-          });
-          
-          if (code) {
-            // Successfully scanned QR code
-            try {
-              const orderData = JSON.parse(code.data);
-              displayOrderDetails(orderData);
-              // Optional: pause scanning after successful scan
-              // toggleCamera();
-            } catch (e) {
-              console.error("Invalid QR code format: ", e);
-            }
-          }
-        } catch (error) {
-          console.error("Error scanning QR code: ", error);
-        }
-      }
-      
-      requestAnimationFrame(tick);
+      // Add event listeners
+      addItemBtn.addEventListener('click', addMenuItem);
+      clearOrderBtn.addEventListener('click', clearOrder);
+      saveOrderBtn.addEventListener('click', saveOrder);
+      generateQrBtn.addEventListener('click', generateQRCode);
+      printBillBtn.addEventListener('click', printBill);
+      cameraToggle.addEventListener('click', toggleCamera);
+      billOrderSelect.addEventListener('change', previewBill);
     }
     
-    function displayOrderDetails(orderData) {
-      if (!orderData || !orderData.items || !Array.isArray(orderData.items)) {
-        orderDetails.innerHTML = `
-          <div class="no-orders">Invalid order data</div>
-        `;
-        orderDetails.classList.remove("hidden");
+    // Menu Management Functions
+    function addMenuItem() {
+      const name = itemNameInput.value.trim();
+      const price = parseFloat(itemPriceInput.value);
+      const category = itemCategoryInput.value;
+      const isVeg = itemIsVegInput.checked;
+      
+      if (!name || isNaN(price) || price <= 0) {
+        alert('Please enter a valid item name and price');
         return;
       }
       
-      let itemsHtml = "";
-      let subtotal = 0;
+      const newItem = {
+        id: Date.now().toString(),
+        name,
+        price,
+        category,
+        isVeg
+      };
       
-      orderData.items.forEach((item) => {
-        const itemTotal = item.price * item.quantity;
-        subtotal += itemTotal;
-        
-        itemsHtml += `
-          <div class="order-item">
-            <div class="item-name">
-              ${item.name}
+      menuItems.push(newItem);
+      saveMenuItems();
+      
+      // Clear form
+      itemNameInput.value = '';
+      itemPriceInput.value = '';
+      itemCategoryInput.value = 'starter';
+      itemIsVegInput.checked = true;
+      
+      renderMenuItems();
+      renderOrderMenuItems();
+    }
+    
+    function editMenuItem(itemId) {
+      const item = menuItems.find(item => item.id === itemId);
+      if (!item) return;
+      
+      itemNameInput.value = item.name;
+      itemPriceInput.value = item.price;
+      itemCategoryInput.value = item.category;
+      itemIsVegInput.checked = item.isVeg;
+      
+      // Remove the item from the list
+      menuItems = menuItems.filter(item => item.id !== itemId);
+      saveMenuItems();
+      renderMenuItems();
+      renderOrderMenuItems();
+    }
+    
+    function deleteMenuItem(itemId) {
+      if (confirm('Are you sure you want to delete this item?')) {
+        menuItems = menuItems.filter(item => item.id !== itemId);
+        saveMenuItems();
+        renderMenuItems();
+        renderOrderMenuItems();
+      }
+    }
+    
+    function saveMenuItems() {
+      localStorage.setItem('menuItems', JSON.stringify(menuItems));
+    }
+    
+    function renderMenuItems() {
+      if (menuItems.length === 0) {
+        menuList.innerHTML = '<div class="no-content">No menu items added yet</div>';
+        return;
+      }
+      
+      menuList.innerHTML = '';
+      menuItems.forEach(item => {
+        const itemElement = document.createElement('div');
+        itemElement.className = 'menu-item';
+        itemElement.innerHTML = `
+          <div class="menu-item-details">
+            <div class="menu-item-name">
+              ${item.name} 
               <span class="veg-indicator ${item.isVeg ? 'veg' : 'non-veg'}"></span>
             </div>
-            <div class="item-details">
-              <span>Quantity: ${item.quantity}</span>
-              <span class="item-price">₹${item.price.toFixed(2)}</span>
-            </div>
-            <div class="item-details">
-              <span>Item Total:</span>
-              <span class="item-price">₹${itemTotal.toFixed(2)}</span>
-            </div>
+            <div class="menu-item-price">₹${item.price.toFixed(2)} - ${getCategoryName(item.category)}</div>
+          </div>
+          <div class="menu-item-actions">
+            <button class="action-btn edit" data-id="${item.id}">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="action-btn delete" data-id="${item.id}">
+              <i class="fas fa-trash"></i>
+            </button>
           </div>
         `;
+        
+        menuList.appendChild(itemElement);
       });
       
-      // Use the provided totals or calculate them
-      const total = orderData.total || subtotal;
-      const tax = total - subtotal;
+      // Add event listeners
+      document.querySelectorAll('.action-btn.edit').forEach(btn => {
+        btn.addEventListener('click', () => editMenuItem(btn.getAttribute('data-id')));
+      });
       
-      const timestamp = orderData.timestamp || new Date().toLocaleString();
+      document.querySelectorAll('.action-btn.delete').forEach(btn => {
+        btn.addEventListener('click', () => deleteMenuItem(btn.getAttribute('data-id')));
+      });
+    }
+    
+    function getCategoryName(categoryValue) {
+      const categories = {
+        starter: 'Starter',
+        mainCourse: 'Main Course',
+        dessert: 'Dessert',
+        beverage: 'Beverage'
+      };
       
-      orderDetails.innerHTML = `
-        <h2>Order Details</h2>
-        ${itemsHtml}
-        <div class="totals">
-          <div class="total-row">
-            <span>Subtotal:</span>
-            <span>₹${orderData.subtotal.toFixed(2)}</span>
+      return categories[categoryValue] || categoryValue;
+    }
+    
+    // Order Management Functions
+    function renderOrderMenuItems() {
+      if (menuItems.length === 0) {
+        orderMenuList.innerHTML = '<div class="no-content">No menu items available</div>';
+        return;
+      }
+      
+      orderMenuList.innerHTML = '';
+      
+      // Group items by category
+      const categories = {
+        starter: [],
+        mainCourse: [],
+        dessert: [],
+        beverage: []
+      };
+      
+      menuItems.forEach(item => {
+        if (categories[item.category]) {
+          categories[item.category].push(item);
+        } else {
+          categories.starter.push(item);
+        }
+      });
+      
+      // Render items by category
+      Object.keys(categories).forEach(category => {
+        if (categories[category].length > 0) {
+          const categoryHeader = document.createElement('div');
+          categoryHeader.className = 'menu-category';
+          categoryHeader.innerHTML = `<h3>${getCategoryName(category)}</h3>`;
+          orderMenuList.appendChild(categoryHeader);
+          
+          categories[category].forEach(item => {
+            const itemElement = document.createElement('div');
+            itemElement.className = 'menu-item';
+            itemElement.innerHTML = `
+              <div class="menu-item-details">
+                <div class="menu-item-name">
+                  ${item.name} 
+                  <span class="veg-indicator ${item.isVeg ? 'veg' : 'non-veg'}"></span>
+                </div>
+                <div class="menu-item-price">₹${item.price.toFixed(2)}</div>
+              </div>
+              <div class="menu-item-actions">
+                <button class="btn success" data-id="${item.id}">
+                  <i class="fas fa-plus"></i> Add
+                </button>
+              </div>
+            `;
+            
+            orderMenuList.appendChild(itemElement);
+          });
+        }
+      });
+      
+      // Add event listeners
+      document.querySelectorAll('#orderMenuList .btn').forEach(btn => {
+        btn.addEventListener('click', () => addToOrder(btn.getAttribute('data-id')));
+      });
+    }
+    
+    function addToOrder(itemId) {
+      const menuItem = menuItems.find(item => item.id === itemId);
+      if (!menuItem) return;
+      
+      // Check if item already in order
+      const existingItem = currentOrder.items.find(item => item.id === itemId);
+      
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        currentOrder.items.push({
+          ...menuItem,
+          quantity: 1
+        });
+      }
+      
+      updateOrderTotals();
+      renderCurrentOrder();
+    }
+    
+    function removeFromOrder(itemId) {
+    currentOrder.items = currentOrder.items.filter(item => item.id !== itemId);
+    updateOrderTotals();
+    renderCurrentOrder();
+  }
+  
+  function updateItemQuantity(itemId, quantity) {
+    const item = currentOrder.items.find(item => item.id === itemId);
+    if (!item) return;
+    
+    quantity = parseInt(quantity);
+    if (isNaN(quantity) || quantity < 1) {
+      quantity = 1;
+    }
+    
+    item.quantity = quantity;
+    updateOrderTotals();
+    renderCurrentOrder();
+  }
+  
+  function updateOrderTotals() {
+    // Update current table number
+    currentOrder.tableNumber = parseInt(tableNumberInput.value) || 1;
+    
+    // Calculate subtotal
+    currentOrder.subtotal = currentOrder.items.reduce((total, item) => {
+      return total + (item.price * item.quantity);
+    }, 0);
+    
+    // Calculate tax (5%)
+    currentOrder.tax = currentOrder.subtotal * 0.05;
+    
+    // Calculate total
+    currentOrder.total = currentOrder.subtotal + currentOrder.tax;
+    
+    // Update timestamp
+    currentOrder.timestamp = new Date().toLocaleString();
+    
+    // Update display
+    orderSubtotal.textContent = `₹${currentOrder.subtotal.toFixed(2)}`;
+    orderTax.textContent = `₹${currentOrder.tax.toFixed(2)}`;
+    orderTotal.textContent = `₹${currentOrder.total.toFixed(2)}`;
+    
+    // Show/hide totals
+    orderTotals.style.display = currentOrder.items.length > 0 ? 'block' : 'none';
+  }
+  
+  function renderCurrentOrder() {
+    if (currentOrder.items.length === 0) {
+      currentOrderItems.innerHTML = '<div class="no-content">No items added to order</div>';
+      return;
+    }
+    
+    currentOrderItems.innerHTML = '';
+    currentOrder.items.forEach(item => {
+      const itemElement = document.createElement('div');
+      itemElement.className = 'order-item';
+      itemElement.innerHTML = `
+        <div class="item-name">
+          ${item.name}
+          <span class="veg-indicator ${item.isVeg ? 'veg' : 'non-veg'}"></span>
+        </div>
+        <div class="item-details">
+          <div class="quantity-control">
+            <button class="quantity-btn minus" data-id="${item.id}">-</button>
+            <input type="number" class="quantity-input" value="${item.quantity}" min="1" data-id="${item.id}">
+            <button class="quantity-btn plus" data-id="${item.id}">+</button>
           </div>
-          ${tax > 0 ? `
-          <div class="total-row">
-            <span>Tax/Charges:</span>
-            <span>₹${tax.toFixed(2)}</span>
-          </div>
-          ` : ''}
-          <div class="total-row grand-total">
-            <span>Total Amount:</span>
-            <span>₹${orderData.total.toFixed(2)}</span>
+          <div class="item-price">
+            <span>₹${item.price.toFixed(2)} × ${item.quantity}</span>
+            <strong>₹${(item.price * item.quantity).toFixed(2)}</strong>
           </div>
         </div>
-        <div class="timestamp">
-          <i class="fas fa-clock"></i> ${timestamp}
-        </div>
+        <button class="action-btn delete" data-id="${item.id}">
+          <i class="fas fa-times"></i>
+        </button>
       `;
       
-      orderDetails.classList.remove("hidden");
+      currentOrderItems.appendChild(itemElement);
+    });
+    
+    // Add event listeners
+    document.querySelectorAll('.quantity-btn.minus').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const itemId = btn.getAttribute('data-id');
+        const item = currentOrder.items.find(item => item.id === itemId);
+        if (item && item.quantity > 1) {
+          updateItemQuantity(itemId, item.quantity - 1);
+        } else {
+          removeFromOrder(itemId);
+        }
+      });
+    });
+    
+    document.querySelectorAll('.quantity-btn.plus').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const itemId = btn.getAttribute('data-id');
+        const item = currentOrder.items.find(item => item.id === itemId);
+        if (item) {
+          updateItemQuantity(itemId, item.quantity + 1);
+        }
+      });
+    });
+    
+    document.querySelectorAll('.quantity-input').forEach(input => {
+      input.addEventListener('change', () => {
+        const itemId = input.getAttribute('data-id');
+        updateItemQuantity(itemId, input.value);
+      });
+    });
+    
+    document.querySelectorAll('#currentOrderItems .action-btn.delete').forEach(btn => {
+      btn.addEventListener('click', () => removeFromOrder(btn.getAttribute('data-id')));
+    });
+  }
+  
+  function clearOrder() {
+    if (currentOrder.items.length === 0 || confirm('Are you sure you want to clear the current order?')) {
+      currentOrder = {
+        tableNumber: parseInt(tableNumberInput.value) || 1,
+        items: [],
+        subtotal: 0,
+        tax: 0,
+        total: 0,
+        timestamp: new Date().toLocaleString()
+      };
       
-      // Add audio feedback for successful scan
-      const audio = new Audio("data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAZAANTU1NTU1NTU1NTU1NTU1NTU1NTWMjIyMjIyMjIyMjIyMjIyMjIyMjMPDw8PDw8PDw8PDw8PDw8PDw8MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/+MYxAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=");
-      audio.play();
+      updateOrderTotals();
+      renderCurrentOrder();
     }
+  }
+  
+  function saveOrder() {
+    if (currentOrder.items.length === 0) {
+      alert('Please add items to the order before saving');
+      return;
+    }
+    
+    const order = {
+      id: Date.now().toString(),
+      tableNumber: currentOrder.tableNumber,
+      items: [...currentOrder.items],
+      subtotal: currentOrder.subtotal,
+      tax: currentOrder.tax,
+      total: currentOrder.total,
+      timestamp: currentOrder.timestamp
+    };
+    
+    savedOrders.push(order);
+    localStorage.setItem('savedOrders', JSON.stringify(savedOrders));
+    
+    alert(`Order for Table ${order.tableNumber} saved successfully!`);
+    renderOrderSelect();
+    
+    // Clear current order
+    clearOrder();
+  }
+  
+  // Bill Generation Functions
+  function renderOrderSelect() {
+    billOrderSelect.innerHTML = '<option value="">-- Select an order --</option>';
+    
+    if (savedOrders.length === 0) {
+      return;
+    }
+    
+    savedOrders.forEach(order => {
+      const option = document.createElement('option');
+      option.value = order.id;
+      option.textContent = `Table ${order.tableNumber} - ₹${order.total.toFixed(2)} - ${order.timestamp}`;
+      billOrderSelect.appendChild(option);
+    });
+  }
+  
+  function previewBill() {
+    const orderId = billOrderSelect.value;
+    
+    if (!orderId) {
+      billPreview.innerHTML = '<div class="no-content">Select an order to generate bill</div>';
+      billActions.style.display = 'none';
+      return;
+    }
+    
+    const order = savedOrders.find(order => order.id === orderId);
+    if (!order) return;
+    
+    const billContent = generateBillHTML(order);
+    billPreview.innerHTML = billContent;
+    billPrintArea.innerHTML = billContent;
+    billActions.style.display = 'flex';
+  }
+  
+  function generateBillHTML(order) {
+    return `
+      <div class="bill-container">
+        <div class="bill-header">
+          <div class="bill-restaurant-name">Taste of India</div>
+          <div class="bill-restaurant-address">123 Main Street, Bengaluru</div>
+        </div>
+        
+        <div class="bill-info">
+          <div>
+            <strong>Table:</strong> ${order.tableNumber}
+          </div>
+          <div>
+            <strong>Date:</strong> ${new Date(order.timestamp).toLocaleDateString()}
+          </div>
+        </div>
+        
+        <div class="bill-info">
+          <div>
+            <strong>Order ID:</strong> ${order.id.slice(-6)}
+          </div>
+          <div>
+            <strong>Time:</strong> ${new Date(order.timestamp).toLocaleTimeString()}
+          </div>
+        </div>
+        
+        <div class="bill-details">
+          ${order.items.map(item => `
+            <div class="bill-item">
+              <div>${item.name} × ${item.quantity}</div>
+              <div>₹${(item.price * item.quantity).toFixed(2)}</div>
+            </div>
+          `).join('')}
+        </div>
+        
+        <div class="bill-item">
+          <div>Subtotal:</div>
+          <div>₹${order.subtotal.toFixed(2)}</div>
+        </div>
+        
+        <div class="bill-item">
+          <div>Tax (5%):</div>
+          <div>₹${order.tax.toFixed(2)}</div>
+        </div>
+        
+        <div class="bill-total">
+          <div>Total:</div>
+          <div>₹${order.total.toFixed(2)}</div>
+        </div>
+        
+        <div id="qrContainer" class="qr-code-container">
+          <!-- QR code will be inserted here -->
+        </div>
+        
+        <div class="bill-thank-you">
+          Thank you for dining with us!
+        </div>
+      </div>
+    `;
+  }
+  
+  function generateQRCode() {
+    const orderId = billOrderSelect.value;
+    if (!orderId) return;
+    
+    const order = savedOrders.find(order => order.id === orderId);
+    if (!order) return;
+    
+    // Create a simple QR code data
+    const qrData = JSON.stringify({
+      id: order.id,
+      table: order.tableNumber,
+      total: order.total,
+      timestamp: order.timestamp
+    });
+    
+    // Use a QR code service (for demo purposes we'll use a placeholder)
+    const qrContainer = document.getElementById('qrContainer');
+    qrContainer.innerHTML = `
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}" 
+           class="qr-code" alt="Order QR Code">
+      <div style="margin-top: 5px; font-size: 12px;">Scan to verify order</div>
+    `;
+  }
+  
+  function printBill() {
+    window.print();
+  }
+  
+  // QR Scanner Functions
+  async function toggleCamera() {
+    if (scanning) {
+      stopScanner();
+      cameraToggle.innerHTML = '<i class="fas fa-camera"></i> Activate Camera';
+    } else {
+      await startScanner();
+      cameraToggle.innerHTML = '<i class="fas fa-camera-retro"></i> Stop Camera';
+    }
+  }
+  
+  async function startScanner() {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: "environment" } 
+      });
+      
+      video.srcObject = stream;
+      scanning = true;
+      
+      // Start scanning for QR codes
+      scanQRCode();
+      
+    } catch (err) {
+      console.error('Error accessing camera:', err);
+      alert('Could not access the camera. Please check permissions.');
+    }
+  }
+  
+  function stopScanner() {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      video.srcObject = null;
+      scanning = false;
+    }
+  }
+  
+  function scanQRCode() {
+    if (!scanning) return;
+    
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    
+    // Schedule next scan
+    requestAnimationFrame(scanQRCode);
+    
+    // Only scan if video is playing
+    if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: "dontInvert",
+    });
+    
+    if (code) {
+      // Found QR code
+      handleQRCode(code.data);
+    }
+  }
+  
+  function handleQRCode(data) {
+    try {
+      const orderData = JSON.parse(data);
+      
+      // Verify if this is our order QR code
+      if (orderData.id && orderData.table && orderData.total) {
+        // Stop scanning
+        stopScanner();
+        cameraToggle.innerHTML = '<i class="fas fa-camera"></i> Activate Camera';
+        
+        // Find the order
+        const order = savedOrders.find(order => order.id === orderData.id);
+        
+        if (order) {
+          scanOrderDetails.innerHTML = `
+            <h2>Order Details</h2>
+            <div class="card">
+              <div class="order-item">
+                <div class="item-name">Table ${order.tableNumber}</div>
+                <div class="timestamp">${order.timestamp}</div>
+              </div>
+              
+              ${order.items.map(item => `
+                <div class="order-item">
+                  <div class="item-name">
+                    ${item.name} 
+                    <span class="veg-indicator ${item.isVeg ? 'veg' : 'non-veg'}"></span>
+                  </div>
+                  <div class="item-details">
+                    <span>Quantity: ${item.quantity}</span>
+                    <span class="item-price">₹${(item.price * item.quantity).toFixed(2)}</span>
+                  </div>
+                </div>
+              `).join('')}
+              
+              <div class="totals">
+                <div class="total-row">
+                  <span>Subtotal:</span>
+                  <span>₹${order.subtotal.toFixed(2)}</span>
+                </div>
+                <div class="total-row">
+                  <span>Tax (5%):</span>
+                  <span>₹${order.tax.toFixed(2)}</span>
+                </div>
+                <div class="total-row grand-total">
+                  <span>Total Amount:</span>
+                  <span>₹${order.total.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          scanOrderDetails.innerHTML = `
+            <div class="card">
+              <div class="no-content">Order not found in system</div>
+            </div>
+          `;
+        }
+      }
+    } catch (err) {
+      console.error('Error parsing QR code:', err);
+    }
+  }
   </script>
-</body>
-</html>
+  </body>
+  </html>
