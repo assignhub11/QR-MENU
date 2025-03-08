@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delicious Eats - Customer Menu</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --primary-color: #ff6600;
+            --primary-dark: #cc5200;
+            --primary-light: #ff8533;
+            --text-color: #333;
+            --light-bg: #f8f8f8;
+            --white: #ffffff;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            --card-radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--light-bg);
+            color: var(--text-color);
+        }
+
+        /* Header Styles */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: var(--white);
+            padding: 15px 20px;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            font-size: 24px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .cart-btn {
+            display: flex;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 50px;
+            color: var(--white);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .cart-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .cart-icon {
+            font-size: 20px;
+            margin-right: 8px;
+        }
+
+        .cart-count {
+            background-color: var(--white);
+            color: var(--primary-color);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        /* Search Bar */
+        .search-container {
+            background-color: var(--white);
+            padding: 15px 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 56px;
+            z-index: 99;
+        }
+
+        .search-bar {
+            display: flex;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 50px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(255, 102, 0, 0.2);
+        }
+
+        .search-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 0 20px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .search-button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            background-color: var(--white);
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            position: sticky;
+            top: 120px;
+            z-index: 98;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            margin-right: 10px;
+            background-color: transparent;
+            border: none;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .nav-tab.active {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+
+        /* Menu Container */
+        .menu-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .menu-item {
+            background: var(--white);
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: transform 0.3s;
+            text-align: center;
+        }
+
+        .menu-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .menu-item img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .menu-item h3 {
+            margin: 15px 0 10px;
+            font-size: 18px;
+        }
+
+        .menu-item p {
+            font-size: 20px;
+            color: var(--primary-color);
+            font-weight: bold;
+            margin: 5px 0 15px;
+        }
+
+        .menu-item button {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 10px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 90%;
+            margin: 0 auto 15px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .menu-item button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        /* Cart Container */
+        .cart-container {
+            position: fixed;
+            bottom: -800px;
+            right: 0;
+            width: 320px;
+            background: var(--white);
+            padding: 0;
+            box-shadow: -2px -2px 10px rgba(0, 0, 0, 0.2);
+            border-radius: 10px 10px 0 0;
+            transition: bottom 0.3s;
+            z-index: 1000;
+        }
+
+        .cart-container.active {
+            bottom: 0;
+        }
+
+        .cart-container h2 {
+            font-size: 18px;
+            margin: 0;
+            text-align: center;
+            background: var(--primary-color);
+            color: white;
+            padding: 15px;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cart-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .cart-items {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            align-items: center;
+        }
+
+        .cart-footer {
+            padding: 15px;
+        }
+
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+        }
+
+        .generate-qr {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .checkout-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .generate-qr:hover {
+            background: var(--primary-dark);
+        }
+
+        .checkout-btn:hover {
+            background: #3e8e41;
+        }
+
+        #qrcode {
+            text-align: center;
+            padding: 15px 0;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Notification styles */
+        .notification {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            transition: top 0.3s;
+        }
+
+        .notification.show {
+            top: 20px;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+
+        .empty-state p {
+            margin: 10px 0;
+        }
+
+        /* Loading spinner */
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* No results state */
+        .no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .no-results h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #666;
+        }
+
+        .no-results p {
+            color: #888;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .menu-container {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            }
+
+            .cart-container {
+                width: 100%;
+                right: 0;
+            }
+
+            .nav-tabs {
+                top: 115px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo">
+            <span class="logo-icon">🍔</span>
+            <h1>Delicious Eats</h1>
+        </div>
+        <button class="cart-btn" onclick="toggleCart()">
+            <span class="cart-icon">🛒</span>
+            <span>Cart</span>
+            <span class="cart-count" id="cart-badge">0</span>
+        </button>
+    </header>
+
+    <div class="search-container">
+        <div class="search-bar">
+            <input type="text" class="search-input" id="search-input" placeholder="Search for food items..." onkeyup="searchMenu(event)">
+            <button class="search-button" onclick="searchMenu()">Search</button>
+        </div>
+    </div>
+
+    <div class="nav-tabs" id="category-tabs">
+        <!-- Categories will be loaded dynamically -->
+        <button class="nav-tab active" data-category="all">All Items</button>
+    </div>
+
+    <div id="menu-list" class="menu-container">
+        <!-- Menu items will be loaded here -->
+        <div class="loader"></div>
+    </div>
+
+    <div id="cart" class="cart-container">
+        <h2>
+            <span>Your Cart</span>
+            <button class="cart-close" onclick="toggleCart()">×</button>
+        </h2>
+        <div id="cart-items" class="cart-items"></div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span id="cart-total-amount">₹0</span>
+            </div>
+            <button class="generate-qr" onclick="generateQRCode()">Generate QR Code</button>
+            <button class="checkout-btn" onclick="checkout()">Checkout</button>
+            <div id="qrcode"></div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">Item added to cart!</div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCkPeO_08YnpAeyFRlAljffjXc-J1bfVuY",
+            authDomain: "onlinemenuproject.firebaseapp.com",
+            projectId: "onlinemenuproject",
+            storageBucket: "onlinemenuproject.firebasestorage.app",
+            messagingSenderId: "463414061066",
+            appId: "1:463414061066:web:8b3c14f4603083769fd7f3",
+            measurementId: "G-8LWQ60TSKT"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const menuCollection = db.collection('menuItems');
+        const categoryCollection = db.collection('categories');
+
+        // Global variables
+        let currentCategory = 'all';
+        let allMenuItems = [];
+        let categories = [];
+        let filteredItems = [];
+        let isSearchActive = false;
+
+        // Function to load categories
+        function loadCategories() {
+            return categoryCollection.get()
+                .then((querySnapshot) => {
+                    const categoryList = [];
+                    
+                    querySnapshot.forEach(doc => {
+                        categoryList.push({
+                            id: doc.id,
+                            name: doc.data().name
+                        });
+                    });
+                    
+                    return categoryList;
+                })
+                .catch(error => {
+                    console.error("Error loading categories: ", error);
+                    return [];
+                });
+        }
+
+        // Function to update category tabs
+        function updateCategoryTabs(categoriesList) {
+            categories = categoriesList;
+            const tabsContainer = document.getElementById('category-tabs');
+            
+            // Clear existing tabs except "All Items"
+            tabsContainer.innerHTML = '<button class="nav-tab active" data-category="all">All Items</button>';
+            
+            categoriesList.forEach(category => {
+                // Add tab
+                const tab = document.createElement('button');
+                tab.classList.add('nav-tab');
+                tab.setAttribute('data-category', category.id);
+                tab.textContent = category.name;
+                tab.onclick = () => filterMenuByCategory(category.id);
+                tabsContainer.appendChild(tab);
+            });
+        }
+
+        // Function to load menu items
+        function loadMenu() {
+            const menuList = document.getElementById("menu-list");
+            menuList.innerHTML = '<div class="loader"></div>';
+
+            return menuCollection.get()
+                .then((querySnapshot) => {
+                    allMenuItems = [];
+                    menuList.innerHTML = "";
+                    
+                    // Store all items
+                    querySnapshot.forEach(doc => {
+                        allMenuItems.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+
+                    // Display items based on current category
+                    displayMenuItems();
+                    return allMenuItems;
+                })
+                .catch(error => {
+                    console.error("Error loading menu: ", error);
+                    menuList.innerHTML = `
+                        <div class="empty-state">
+                            <h3>Error Loading Menu</h3>
+                            <p>There was a problem connecting to the database.</p>
+                        </div>
+                    `;
+                    return [];
+                });
+        }
+
+        // Function to filter menu by category
+        function filterMenuByCategory(categoryId) {
+            // Reset search if active
+            if (isSearchActive) {
+                document.getElementById('search-input').value = '';
+                isSearchActive = false;
+            }
+            
+            // Update active tab
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.getAttribute('data-category') === categoryId) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            currentCategory = categoryId;
+            displayMenuItems();
+        }
+
+        // Function to search menu items
+        function searchMenu(event) {
+            // If Enter key pressed or button clicked
+            if (event && event.key && event.key !== 'Enter') {
+                return;
+            }
+            
+            const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+            
+            if (searchTerm === '') {
+                // If search cleared, revert to category view
+                isSearchActive = false;
+                displayMenuItems();
+                return;
+            }
+            
+            isSearchActive = true;
+            
+            // Filter items by search term
+            filteredItems = allMenuItems.filter(item => {
+                return item.name.toLowerCase().includes(searchTerm) || 
+                       (item.description && item.description.toLowerCase().includes(searchTerm));
+            });
+            
+            // Display search results
+            displayMenuItems(true);
+        }
+
+        // Function to display menu items based on current category or search
+        function displayMenuItems(isSearchResult = false) {
+            const menuList = document.getElementById("menu-list");
+            menuList.innerHTML = "";
+            
+            // Determine which items to display
+            let displayItems = isSearchResult ? filteredItems : allMenuItems;
+            
+            // Filter by category if not searching and not "all" category
+            if (!isSearchResult && currentCategory !== 'all') {
+                displayItems = displayItems.filter(item => item.categoryId === currentCategory);
+            }
+
+            // Check if there are items to display
+            if (displayItems.length === 0) {
+                menuList.innerHTML = `
+                    <div class="no-results">
+                        <h3>${isSearchResult ? 'No search results found' : 'No items found'}</h3>
+                        <p>${isSearchResult ? 'Try different keywords or browse our menu categories' : 'There are no items in this category yet'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Display items
+            displayItems.forEach(item => {
+                const div = document.createElement("div");
+                div.classList.add("menu-item");
+                
+                // Find category name
+                let categoryName = "Uncategorized";
+                const category = categories.find(cat => cat.id === item.categoryId);
+                if (category) {
+                    categoryName = category.name;
+                }
+                
+                div.innerHTML = `
+                    <img src="${item.image || '/api/placeholder/400/320'}" alt="${item.name}">
+                    <h3>${item.name}</h3>
+                    <p>₹${item.price}</p>
+                    <div style="color:#666;margin-bottom:10px;font-size:14px;">
+                        ${item.description || ''}
+                        <br>
+                        <span style="color:#999;">${categoryName}</span>
+                    </div>
+                    <button onclick="addToCart('${item.id}', '${item.name}', ${item.price})">Add to Cart</button>
+                `;
+                menuList.appendChild(div);
+            });
+        }
+
+        // CART FUNCTIONALITY
+        let cart = [];
+
+        // Function to add an item to the cart
+        function addToCart(id, name, price) {
+            const existingItem = cart.find(item => item.id === id);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({
+                    id: id,
+                    name: name,
+                    price: price,
+                    quantity: 1
+                });
+            }
+            
+            updateCartUI();
+            showNotification(`Added ${name} to cart!`);
+        }
+
+        // Function to remove an item from the cart
+        function removeFromCart(id) {
+            cart = cart.filter(item => item.id !== id);
+            updateCartUI();
+            showNotification("Item removed from cart");
+        }
+
+        // Function to update cart quantity
+        function updateCartQuantity(id, quantity) {
+            const item = cart.find(item => item.id === id);
+            if (item) {
+                item.quantity = parseInt(quantity);
+                if (item.quantity <= 0) {
+                    removeFromCart(id);
+                } else {
+                    updateCartUI();
+                }
+            }
+        }
+
+        // Function to update the cart UI
+        function updateCartUI() {
+            const cartItems = document.getElementById("cart-items");
+            const cartBadge = document.getElementById("cart-badge");
+            const totalAmount = document.getElementById("cart-total-amount");
+            let total = 0;
+            let itemCount = 0;
+            
+            // Clear current cart display
+            cartItems.innerHTML = "";
+            
+            // Check if cart is empty
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<div class="empty-state">Your cart is empty</div>';
+                cartBadge.textContent = "0";
+                totalAmount.textContent = "₹0";
+                return;
+            }
+            
+            // Display cart items
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                itemCount += item.quantity;
+                
+                const div = document.createElement("div");
+                div.classList.add("cart-item");
+                div.innerHTML = `
+                    <div>
+                        <div><strong>${item.name}</strong></div>
+                        <div>₹${item.price} × 
+                            <input type="number" min="1" value="${item.quantity}" 
+                                onchange="updateCartQuantity('${item.id}', this.value)" style="width:40px;"> 
+                            = ₹${itemTotal}
+                        </div>
+                    </div>
+                    <button onclick="removeFromCart('${item.id}')" style="background:none;border:none;cursor:pointer;font-size:18px;">🗑️</button>
+                `;
+                cartItems.appendChild(div);
+            });
+            
+            // Update total
+            cartBadge.textContent = itemCount;
+            totalAmount.textContent = `₹${total}`;
+            
+            // Clear any existing QR code
+            document.getElementById('qrcode').innerHTML = '';
+        }
+
+        // Function to toggle cart visibility
+        function toggleCart() {
+            document.getElementById('cart').classList.toggle('active');
+        }
+
+        // Show notification
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.backgroundColor = isError ? '#ff3333' : '#4CAF50';
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Generate QR code for the cart
+        function generateQRCode() {
+    if (cart.length === 0) {
+        showNotification("Your cart is empty", true);
+        return;
+    }
+    
+    const qrcodeContainer = document.getElementById('qrcode');
+    qrcodeContainer.innerHTML = ''; // Clear previous QR code
+    
+    // Create cart data to encode
+    const cartData = {
+        items: cart,
+        total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+        timestamp: new Date().toISOString()
+    };
+    
+    // Convert cart data to JSON string
+    const cartJSON = JSON.stringify(cartData);
+    
+    try {
+        // Create new QR code
+        new QRCode(qrcodeContainer, {
+            text: cartJSON,
+            width: 128,
+            height: 128,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.M
+        });
+        
+        console.log("QR code generated successfully");
+    } catch (error) {
+        console.error("QR code generation error:", error);
+        showNotification("Failed to generate QR code", true);
+        
+        // Fallback approach if the first method fails
+        if (qrcodeContainer.innerHTML === '') {
+            try {
+                const qrcode = new QRCode(qrcodeContainer);
+                qrcode.makeCode(cartJSON);
+                console.log("QR code generated with fallback method");
+            } catch (fallbackError) {
+                console.error("Fallback QR code generation failed:", fallbackError);
+                showNotification("Could not generate QR code", true);
+            }
+        }
+    }
+}
+        // Checkout function
+        function checkout() {
+            if (cart.length === 0) {
+                showNotification("Your cart is empty", true);
+                return;
+            }
+            
+            alert("Thank you for your order! Your total is ₹" + cart.reduce((sum, item) => sum + (item.price * item.quantity), 0));
+            cart = [];
+            updateCartUI();
+            toggleCart();
+            showNotification("Order placed successfully!");
+        }
+
+        // Listen for Enter key in search input
+        document.getElementById('search-input').addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                searchMenu(event);
+            }
+        });
+
+        // Real-time updates - Listen for menu changes
+        function setupRealTimeUpdates() {
+            // Listen for menu item changes
+            menuCollection.onSnapshot((snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added" || change.type === "modified" || change.type === "removed") {
+                        // Reload menu data
+                        loadMenu();
+                    }
+                });
+            });
+
+            // Listen for category changes
+            categoryCollection.onSnapshot((snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added" || change.type === "modified" || change.type === "removed") {
+                        // Reload categories
+                        loadCategories().then(updateCategoryTabs);
+                    }
+                });
+            });
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load categories first, then menu items
+            loadCategories()
+                .then(categoriesList => {
+                    updateCategoryTabs(categoriesList);
+                    return loadMenu();
+                })
+                .then(() => {
+                    // Setup real-time updates
+                    setupRealTimeUpdates();
+                })
+                .catch(error => {
+                    console.error("Error initializing app: ", error);
+                    showNotification("Error loading menu data", true);
+                });
+        });
+    </script>
+</body>
+
+</html>
