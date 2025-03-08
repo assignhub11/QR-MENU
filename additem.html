@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delicious Eats - Online Menu</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <style>
+        :root {
+            --primary-color: #ff6600;
+            --primary-dark: #cc5200;
+            --primary-light: #ff8533;
+            --text-color: #333;
+            --light-bg: #f8f8f8;
+            --white: #ffffff;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            --card-radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--light-bg);
+            color: var(--text-color);
+        }
+
+        /* Header Styles */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: var(--white);
+            padding: 15px 20px;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            font-size: 24px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .cart-btn {
+            display: flex;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 50px;
+            color: var(--white);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .cart-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .cart-icon {
+            font-size: 20px;
+            margin-right: 8px;
+        }
+
+        .cart-count {
+            background-color: var(--white);
+            color: var(--primary-color);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            background-color: var(--white);
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            margin-right: 10px;
+            background-color: transparent;
+            border: none;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .nav-tab.active {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+
+        /* Menu Container */
+        .menu-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .menu-item {
+            background: var(--white);
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: transform 0.3s;
+            text-align: center;
+        }
+
+        .menu-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .menu-item img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .menu-item h3 {
+            margin: 15px 0 10px;
+            font-size: 18px;
+        }
+
+        .menu-item p {
+            font-size: 20px;
+            color: var(--primary-color);
+            font-weight: bold;
+            margin: 5px 0 15px;
+        }
+
+        .menu-item button {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 10px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 90%;
+            margin: 0 auto 15px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .menu-item button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        /* Cart Container */
+        .cart-container {
+            position: fixed;
+            bottom: -800px;
+            right: 0;
+            width: 320px;
+            background: var(--white);
+            padding: 0;
+            box-shadow: -2px -2px 10px rgba(0, 0, 0, 0.2);
+            border-radius: 10px 10px 0 0;
+            transition: bottom 0.3s;
+            z-index: 1000;
+        }
+
+        .cart-container.active {
+            bottom: 0;
+        }
+
+        .cart-container h2 {
+            font-size: 18px;
+            margin: 0;
+            text-align: center;
+            background: var(--primary-color);
+            color: white;
+            padding: 15px;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cart-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .cart-items {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            align-items: center;
+        }
+
+        .cart-footer {
+            padding: 15px;
+        }
+
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+        }
+
+        .generate-qr {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .checkout-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .generate-qr:hover {
+            background: var(--primary-dark);
+        }
+
+        .checkout-btn:hover {
+            background: #3e8e41;
+        }
+
+        #qrcode {
+            text-align: center;
+            padding: 15px 0;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Notification styles */
+        .notification {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            transition: top 0.3s;
+        }
+
+        .notification.show {
+            top: 20px;
+        }
+
+        /* Admin Panel Styles */
+        .admin-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            z-index: 999;
+        }
+
+        .admin-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: var(--white);
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+            transition: right 0.3s;
+            z-index: 1002;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .admin-panel.active {
+            right: 0;
+        }
+
+        .admin-panel h2 {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-panel form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .admin-panel input,
+        .admin-panel select,
+        .admin-panel textarea,
+        .admin-panel button {
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .admin-panel input,
+        .admin-panel select,
+        .admin-panel textarea {
+            border: 1px solid #ddd;
+        }
+
+        .admin-panel button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .admin-panel button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .admin-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .admin-tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .admin-tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+
+        .admin-tab.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .admin-content {
+            display: none;
+        }
+
+        .admin-content.active {
+            display: block;
+        }
+
+        .item-list {
+            margin-top: 20px;
+        }
+
+        .admin-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .admin-item-details {
+            flex-grow: 1;
+        }
+
+        .admin-item-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .edit-item,
+        .delete-item {
+            background-color: #ff3333;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .edit-item {
+            background-color: #3498db;
+        }
+
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+
+        .empty-state p {
+            margin: 10px 0;
+        }
+
+        /* Loading spinner */
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .menu-container {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            }
+
+            .cart-container {
+                width: 100%;
+                right: 0;
+            }
+
+            .admin-panel {
+                width: 100%;
+                right: -100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo">
+            <span class="logo-icon">🍔</span>
+            <h1>Delicious Eats</h1>
+        </div>
+        <button class="cart-btn" onclick="toggleCart()">
+            <span class="cart-icon">🛒</span>
+            <span>Cart</span>
+            <span class="cart-count" id="cart-badge">0</span>
+        </button>
+    </header>
+
+    <div class="nav-tabs" id="category-tabs">
+        <!-- Categories will be loaded dynamically -->
+        <button class="nav-tab active" data-category="all">All Items</button>
+    </div>
+
+    <div id="menu-list" class="menu-container">
+        <!-- Menu items will be loaded here -->
+        <div class="loader"></div>
+    </div>
+
+    <div id="cart" class="cart-container">
+        <h2>
+            <span>Your Cart</span>
+            <button class="cart-close" onclick="toggleCart()">×</button>
+        </h2>
+        <div id="cart-items" class="cart-items"></div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span id="cart-total-amount">₹0</span>
+            </div>
+            <button class="generate-qr" onclick="generateQRCode()">Generate QR Code</button>
+            <button class="checkout-btn" onclick="checkout()">Checkout</button>
+            <div id="qrcode"></div>
+        </div>
+    </div>
+
+    <button class="admin-toggle" onclick="toggleAdmin()">⚙️</button>
+
+    <div id="admin-panel" class="admin-panel">
+        <h2>
+            <span>Admin Panel</span>
+            <button class="admin-close" onclick="toggleAdmin()">×</button>
+        </h2>
+
+        <div class="admin-tabs">
+            <div class="admin-tab active" onclick="switchAdminTab('menu-tab')">Menu Items</div>
+            <div class="admin-tab" onclick="switchAdminTab('category-tab')">Categories</div>
+        </div>
+
+        <div id="menu-tab" class="admin-content active">
+            <form id="add-item-form">
+                <h3>Add New Menu Item</h3>
+                <input type="text" id="item-name" placeholder="Item Name" required>
+                <textarea id="item-description" placeholder="Short Description" rows="2"></textarea>
+                <input type="number" id="item-price" placeholder="Price" required>
+                <select id="item-category" required>
+                    <option value="">Select Category</option>
+                </select>
+                <input type="text" id="item-image" placeholder="Image URL (or leave empty for placeholder)" value="/api/placeholder/400/320">
+                <button type="submit">Add Item</button>
+            </form>
+            <h3>Menu Items</h3>
+            <div id="admin-item-list" class="item-list">
+                <div class="loader"></div>
+            </div>
+        </div>
+
+        <div id="category-tab" class="admin-content">
+            <form id="add-category-form">
+                <h3>Add New Category</h3>
+                <input type="text" id="category-name" placeholder="Category Name" required>
+                <button type="submit">Add Category</button>
+            </form>
+            <h3>Categories</h3>
+            <div id="admin-category-list" class="item-list">
+                <div class="loader"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">Item added to cart!</div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+  apiKey: "AIzaSyCkPeO_08YnpAeyFRlAljffjXc-J1bfVuY",
+  authDomain: "onlinemenuproject.firebaseapp.com",
+  projectId: "onlinemenuproject",
+  storageBucket: "onlinemenuproject.firebasestorage.app",
+  messagingSenderId: "463414061066",
+  appId: "1:463414061066:web:8b3c14f4603083769fd7f3",
+  measurementId: "G-8LWQ60TSKT"
+};
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const menuCollection = db.collection('menuItems');
+        const categoryCollection = db.collection('categories');
+
+        // Global variables
+        let currentCategory = 'all';
+        let allMenuItems = [];
+        let categories = [];
+
+        // Function to load categories
+        function loadCategories() {
+            return categoryCollection.get()
+                .then((querySnapshot) => {
+                    const categoryList = [];
+                    
+                    querySnapshot.forEach(doc => {
+                        categoryList.push({
+                            id: doc.id,
+                            name: doc.data().name
+                        });
+                    });
+                    
+                    // If no categories found, add default ones
+                    if (categoryList.length === 0) {
+                        return addDefaultCategories().then(() => loadCategories());
+                    }
+                    
+                    return categoryList;
+                })
+                .catch(error => {
+                    console.error("Error loading categories: ", error);
+                    return [];
+                });
+        }
+
+        // Function to add default categories
+        function addDefaultCategories() {
+            const batch = db.batch();
+            const defaultCategories = [
+                { name: 'Main Course' },
+                { name: 'Starters' },
+                { name: 'Desserts' },
+                { name: 'Beverages' }
+            ];
+            
+            defaultCategories.forEach(category => {
+                const newCategoryRef = categoryCollection.doc();
+                batch.set(newCategoryRef, category);
+            });
+            
+            return batch.commit()
+                .then(() => {
+                    console.log("Default categories added");
+                })
+                .catch(error => {
+                    console.error("Error adding default categories: ", error);
+                });
+        }
+
+        // Function to update category tabs
+        function updateCategoryTabs(categoriesList) {
+            categories = categoriesList;
+            const tabsContainer = document.getElementById('category-tabs');
+            const categorySelect = document.getElementById('item-category');
+            
+            // Clear existing tabs except "All Items"
+            tabsContainer.innerHTML = '<button class="nav-tab active" data-category="all">All Items</button>';
+            
+            // Clear and re-add options to the category select
+            categorySelect.innerHTML = '<option value="">Select Category</option>';
+            
+            categoriesList.forEach(category => {
+                // Add tab
+                const tab = document.createElement('button');
+                tab.classList.add('nav-tab');
+                tab.setAttribute('data-category', category.id);
+                tab.textContent = category.name;
+                tab.onclick = () => filterMenuByCategory(category.id);
+                tabsContainer.appendChild(tab);
+                
+                // Add option to select
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = category.name;
+                categorySelect.appendChild(option);
+            });
+        }
+
+        // Function to load menu items
+        function loadMenu() {
+            const menuList = document.getElementById("menu-list");
+            menuList.innerHTML = '<div class="loader"></div>';
+
+            return menuCollection.get()
+                .then((querySnapshot) => {
+                    allMenuItems = [];
+                    menuList.innerHTML = "";
+                    
+                    if (querySnapshot.empty) {
+                        // Add demo items if no items exist
+                        return addDemoItems().then(() => loadMenu());
+                    }
+
+                    // Store all items
+                    querySnapshot.forEach(doc => {
+                        allMenuItems.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+
+                    // Display items based on current category
+                    displayMenuItems();
+                    return allMenuItems;
+                })
+                .catch(error => {
+                    console.error("Error loading menu: ", error);
+                    menuList.innerHTML = `
+                        <div class="empty-state">
+                            <h3>Error Loading Menu</h3>
+                            <p>There was a problem connecting to the database.</p>
+                        </div>
+                    `;
+                    return [];
+                });
+        }
+
+        // Function to filter menu by category
+        function filterMenuByCategory(categoryId) {
+            // Update active tab
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.getAttribute('data-category') === categoryId) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            currentCategory = categoryId;
+            displayMenuItems();
+        }
+
+        // Function to display menu items based on current category
+        function displayMenuItems() {
+            const menuList = document.getElementById("menu-list");
+            menuList.innerHTML = "";
+            
+            // Filter items if needed
+            let displayItems = allMenuItems;
+            if (currentCategory !== 'all') {
+                displayItems = allMenuItems.filter(item => item.categoryId === currentCategory);
+            }
+
+            // Check if there are items to display
+            if (displayItems.length === 0) {
+                menuList.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No Items Found</h3>
+                        <p>There are no items in this category yet.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Display items
+            displayItems.forEach(item => {
+                const div = document.createElement("div");
+                div.classList.add("menu-item");
+                
+                // Find category name
+                let categoryName = "Uncategorized";
+                const category = categories.find(cat => cat.id === item.categoryId);
+                if (category) {
+                    categoryName = category.name;
+                }
+                
+                div.innerHTML = `
+                    <img src="${item.image || '/api/placeholder/400/320'}" alt="${item.name}">
+                    <h3>${item.name}</h3>
+                    <p>₹${item.price}</p>
+                    <div style="color:#666;margin-bottom:10px;font-size:14px;">
+                        ${item.description || ''}
+                        <br>
+                        <span style="color:#999;">${categoryName}</span>
+                    </div>
+                    <button onclick="addToCart('${item.id}', '${item.name}', ${item.price})">Add to Cart</button>
+                `;
+                menuList.appendChild(div);
+            });
+        }
+
+        // Add demo items to Firebase
+        function addDemoItems() {
+            // First load categories
+            return loadCategories().then(categories => {
+                if (categories.length === 0) {
+                    console.error("No categories available");
+                    return;
+                }
+                
+                const batch = db.batch();
+                const demoItems = [
+                    { 
+                        name: "Margherita Pizza", 
+                        price: 250, 
+                        image: "/api/placeholder/400/320",
+                        description: "Classic cheese pizza with tomato sauce",
+                        categoryId: categories.find(cat => cat.name === "Main Course")?.id || categories[0].id 
+                    },
+                    { 
+                        name: "Veg Biryani", 
+                        price: 200, 
+                        image: "/api/placeholder/400/320",
+                        description: "Fragrant rice dish with mixed vegetables and spices",
+                        categoryId: categories.find(cat => cat.name === "Main Course")?.id || categories[0].id 
+                    },
+                    { 
+                        name: "Paneer Butter Masala", 
+                        price: 220, 
+                        image: "/api/placeholder/400/320",
+                        description: "Cottage cheese in a rich tomato gravy",
+                        categoryId: categories.find(cat => cat.name === "Main Course")?.id || categories[0].id 
+                    },
+                    { 
+                        name: "Chicken Curry", 
+                        price: 280, 
+                        image: "/api/placeholder/400/320",
+                        description: "Tender chicken pieces in a spiced curry sauce",
+                        categoryId: categories.find(cat => cat.name === "Main Course")?.id || categories[0].id 
+                    },
+                    { 
+                        name: "Tandoori Roti", 
+                        price: 30, 
+                        image: "/api/placeholder/400/320",
+                        description: "Traditional Indian flatbread",
+                        categoryId: categories.find(cat => cat.name === "Starters")?.id || categories[1].id 
+                    },
+                    { 
+                        name: "Cold Coffee", 
+                        price: 120, 
+                        image: "/api/placeholder/400/320",
+                        description: "Refreshing cold coffee with ice cream",
+                        categoryId: categories.find(cat => cat.name === "Beverages")?.id || categories[3].id 
+                    }
+                ];
+                
+                demoItems.forEach(item => {
+                    const newItemRef = menuCollection.doc();
+                    batch.set(newItemRef, item);
+                });
+                
+                return batch.commit()
+                    .then(() => {
+                        console.log("Demo items added to Firebase");
+                    })
+                    .catch(error => {
+                        console.error("Error adding demo items: ", error);
+                    });
+            });
+        }
+
+        // Load admin panel with current menu items
+        function loadAdminPanel() {
+            const itemList = document.getElementById("admin-item-list");
+            itemList.innerHTML = '<div class="loader"></div>';
+
+            loadMenu().then(items => {
+                itemList.innerHTML = "";
+                
+                if (items.length === 0) {
+                    itemList.innerHTML = "<p class='empty-state'>No menu items found.</p>";
+                    return;
+                }
+
+                items.forEach(item => {
+                    // Find category name
+                    let categoryName = "Uncategorized";
+                    const category = categories.find(cat => cat.id === item.categoryId);
+                    if (category) {
+                        categoryName = category.name;
+                    }
+                    
+                    const div = document.createElement("div");
+                    div.classList.add("admin-item");
+                    div.innerHTML = `
+                        <div class="admin-item-details">
+                            <strong>${item.name}</strong> - ₹${item.price}
+                            <br>
+                            <small>${categoryName}</small>
+                        </div>
+                        <div class="admin-item-actions">
+                            <button class="edit-item" onclick="editItem('${item.id}')">Edit</button>
+                            <button class="delete-item" onclick="deleteItem('${item.id}')">Delete</button>
+                        </div>
+                    `;
+                    itemList.appendChild(div);
+                });
+            });
+
+            // Also load categories
+            loadAdminCategories();
+        }
+
+        // Load categories in admin panel
+        function loadAdminCategories() {
+            const categoryList = document.getElementById("admin-category-list");
+            categoryList.innerHTML = '<div class="loader"></div>';
+
+            loadCategories().then(categoriesList => {
+                categoryList.innerHTML = "";
+                
+                if (categoriesList.length === 0) {
+                    categoryList.innerHTML = "<p class='empty-state'>No categories found.</p>";
+                    return;
+                }
+
+                categoriesList.forEach(category => {
+                    const div = document.createElement("div");
+                    div.classList.add("category-item");
+                    div.innerHTML = `
+                        <span>${category.name}</span>
+                        <button class="delete-item" onclick="deleteCategory('${category.id}')">Delete</button>
+                    `;
+                    categoryList.appendChild(div);
+                });
+            });
+        }
+
+        // Function to add a new menu item
+        function addMenuItem(name, description, price, categoryId, imageUrl) {
+            // Use default placeholder if no image URL provided
+            if (!imageUrl || imageUrl.trim() === "") {
+                imageUrl = "/api/placeholder/400/320";
+            }
+            
+            return menuCollection.add({
+                name: name,
+                description: description || "",
+                price: parseInt(price),
+                categoryId: categoryId,
+                image: imageUrl
+            });
+        }
+
+        // Function to edit a menu item
+        function editItem(id) {
+            const item = allMenuItems.find(item => item.id === id);
+            if (!item) return;
+            
+            // Populate form for editing
+            document.getElementById("item-name").value = item.name;
+            document.getElementById("item-description").value = item.description || "";
+            document.getElementById("item-price").value = item.price;
+            document.getElementById("item-category").value = item.categoryId || "";
+            document.getElementById("item-image").value = item.image || "";
+            // Add hidden input for item ID and change button text
+            let form = document.getElementById("add-item-form");
+            let idInput = document.createElement("input");
+            idInput.type = "hidden";
+            idInput.id = "edit-item-id";
+            idInput.value = id;
+            form.appendChild(idInput);
+            
+            // Change form submit button text
+            document.querySelector("#add-item-form button").textContent = "Update Item";
+            
+            // Scroll to form
+            form.scrollIntoOffset = true;
+        }
+
+        // Function to update a menu item
+        function updateMenuItem(id, name, description, price, categoryId, imageUrl) {
+            // Use default placeholder if no image URL provided
+            if (!imageUrl || imageUrl.trim() === "") {
+                imageUrl = "/api/placeholder/400/320";
+            }
+            
+            return menuCollection.doc(id).update({
+                name: name,
+                description: description || "",
+                price: parseInt(price),
+                categoryId: categoryId,
+                image: imageUrl
+            });
+        }
+
+        // Function to delete a menu item
+        function deleteItem(id) {
+            if (confirm("Are you sure you want to delete this item?")) {
+                menuCollection.doc(id).delete()
+                    .then(() => {
+                        showNotification("Item deleted successfully!");
+                        loadAdminPanel();
+                        loadMenu();
+                    })
+                    .catch(error => {
+                        console.error("Error deleting item: ", error);
+                        showNotification("Error deleting item", true);
+                    });
+            }
+        }
+
+        // Function to add a new category
+        function addCategory(name) {
+            return categoryCollection.add({
+                name: name
+            });
+        }
+
+        // Function to delete a category
+        function deleteCategory(id) {
+            // Check if category is in use
+            const itemsUsingCategory = allMenuItems.filter(item => item.categoryId === id);
+            
+            if (itemsUsingCategory.length > 0) {
+                alert(`This category cannot be deleted because it is used by ${itemsUsingCategory.length} menu items. Reassign these items to other categories first.`);
+                return;
+            }
+            
+            if (confirm("Are you sure you want to delete this category?")) {
+                categoryCollection.doc(id).delete()
+                    .then(() => {
+                        showNotification("Category deleted successfully!");
+                        loadCategories().then(updateCategoryTabs);
+                        loadAdminCategories();
+                    })
+                    .catch(error => {
+                        console.error("Error deleting category: ", error);
+                        showNotification("Error deleting category", true);
+                    });
+            }
+        }
+
+        // CART FUNCTIONALITY
+        let cart = [];
+
+        // Function to add an item to the cart
+        function addToCart(id, name, price) {
+            const existingItem = cart.find(item => item.id === id);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({
+                    id: id,
+                    name: name,
+                    price: price,
+                    quantity: 1
+                });
+            }
+            
+            updateCartUI();
+            showNotification(`Added ${name} to cart!`);
+        }
+
+        // Function to remove an item from the cart
+        function removeFromCart(id) {
+            cart = cart.filter(item => item.id !== id);
+            updateCartUI();
+            showNotification("Item removed from cart");
+        }
+
+        // Function to update cart quantity
+        function updateCartQuantity(id, quantity) {
+            const item = cart.find(item => item.id === id);
+            if (item) {
+                item.quantity = parseInt(quantity);
+                if (item.quantity <= 0) {
+                    removeFromCart(id);
+                } else {
+                    updateCartUI();
+                }
+            }
+        }
+
+        // Function to update the cart UI
+        function updateCartUI() {
+            const cartItems = document.getElementById("cart-items");
+            const cartBadge = document.getElementById("cart-badge");
+            const totalAmount = document.getElementById("cart-total-amount");
+            let total = 0;
+            let itemCount = 0;
+            
+            // Clear current cart display
+            cartItems.innerHTML = "";
+            
+            // Check if cart is empty
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<div class="empty-state">Your cart is empty</div>';
+                cartBadge.textContent = "0";
+                totalAmount.textContent = "₹0";
+                return;
+            }
+            
+            // Display cart items
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                itemCount += item.quantity;
+                
+                const div = document.createElement("div");
+                div.classList.add("cart-item");
+                div.innerHTML = `
+                    <div>
+                        <div><strong>${item.name}</strong></div>
+                        <div>₹${item.price} × 
+                            <input type="number" min="1" value="${item.quantity}" 
+                                onchange="updateCartQuantity('${item.id}', this.value)" style="width:40px;"> 
+                            = ₹${itemTotal}
+                        </div>
+                    </div>
+                    <button onclick="removeFromCart('${item.id}')" style="background:none;border:none;cursor:pointer;font-size:18px;">🗑️</button>
+                `;
+                cartItems.appendChild(div);
+            });
+            
+            // Update total
+            cartBadge.textContent = itemCount;
+            totalAmount.textContent = `₹${total}`;
+            
+            // Clear any existing QR code
+            document.getElementById('qrcode').innerHTML = '';
+        }
+
+        // Function to toggle cart visibility
+        function toggleCart() {
+            document.getElementById('cart').classList.toggle('active');
+        }
+
+        // Function to toggle admin panel
+        function toggleAdmin() {
+            document.getElementById('admin-panel').classList.toggle('active');
+        }
+
+        // Function to switch admin tabs
+        function switchAdminTab(tabId) {
+            // Update active tab
+            document.querySelectorAll('.admin-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.textContent.toLowerCase().includes(tabId.split('-')[0])) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // Update active content
+            document.querySelectorAll('.admin-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // Show notification
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.backgroundColor = isError ? '#ff3333' : '#4CAF50';
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Generate QR code for the cart
+        function generateQRCode() {
+            if (cart.length === 0) {
+                showNotification("Your cart is empty", true);
+                return;
+            }
+            
+            const qrcodeContainer = document.getElementById('qrcode');
+            qrcodeContainer.innerHTML = '';
+            
+            // Create cart data to encode
+            const cartData = {
+                items: cart,
+                total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+                timestamp: new Date().toISOString()
+            };
+            
+            // Generate QR code
+            new QRCode(qrcodeContainer, {
+                text: JSON.stringify(cartData),
+                width: 128,
+                height: 128,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        // Checkout function
+        function checkout() {
+            if (cart.length === 0) {
+                showNotification("Your cart is empty", true);
+                return;
+            }
+            
+            alert("Thank you for your order! Your total is ₹" + cart.reduce((sum, item) => sum + (item.price * item.quantity), 0));
+            cart = [];
+            updateCartUI();
+            toggleCart();
+            showNotification("Order placed successfully!");
+        }
+
+        // Event listeners for forms
+        document.getElementById('add-item-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('item-name').value;
+            const description = document.getElementById('item-description').value;
+            const price = document.getElementById('item-price').value;
+            const categoryId = document.getElementById('item-category').value;
+            const imageUrl = document.getElementById('item-image').value;
+            const editId = document.getElementById('edit-item-id')?.value;
+            
+            // Validate category selection
+            if (!categoryId) {
+                showNotification("Please select a category", true);
+                return;
+            }
+            
+            let promise;
+            if (editId) {
+                // Update existing item
+                promise = updateMenuItem(editId, name, description, price, categoryId, imageUrl);
+            } else {
+                // Add new item
+                promise = addMenuItem(name, description, price, categoryId, imageUrl);
+            }
+            
+            promise.then(() => {
+                // Reset form
+                this.reset();
+                if (editId) {
+                    // Remove hidden input and restore button text
+                    document.getElementById('edit-item-id').remove();
+                    document.querySelector("#add-item-form button").textContent = "Add Item";
+                }
+                showNotification(editId ? "Item updated successfully!" : "Item added successfully!");
+                loadMenu();
+                loadAdminPanel();
+            }).catch(error => {
+                console.error("Error saving item: ", error);
+                showNotification("Error saving item", true);
+            });
+        });
+
+        document.getElementById('add-category-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('category-name').value;
+            
+            addCategory(name).then(() => {
+                this.reset();
+                showNotification("Category added successfully!");
+                loadCategories().then(updateCategoryTabs);
+                loadAdminCategories();
+            }).catch(error => {
+                console.error("Error adding category: ", error);
+                showNotification("Error adding category", true);
+            });
+        });
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load categories first, then menu items
+            loadCategories()
+                .then(categoriesList => {
+                    updateCategoryTabs(categoriesList);
+                    return loadMenu();
+                })
+                .then(() => {
+                    loadAdminPanel();
+                })
+                .catch(error => {
+                    console.error("Error initializing app: ", error);
+                    showNotification("Error loading menu data", true);
+                });
+        });
+    </script>
+</body>
+
+</html>
