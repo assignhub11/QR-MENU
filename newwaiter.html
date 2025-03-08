@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waiter Order Management</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary: #4a6cfa;
+            --primary-dark: #3a5cda;
+            --secondary: #f8f9fa;
+            --text-dark: #343a40;
+            --text-light: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --white: #ffffff;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--gray-100);
+            color: var(--text-dark);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--gray-300);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .menu-section {
+            background-color: var(--white);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            margin-bottom: 15px;
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        .tab-container {
+            display: flex;
+            border-bottom: 1px solid var(--gray-300);
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-light);
+            transition: color 0.3s, border-bottom 0.3s;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+        }
+
+        .menu-items-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        @media (max-width: 992px) {
+            .menu-items-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .menu-item {
+            display: flex;
+            justify-content: space-between;
+            background-color: var(--secondary);
+            border-radius: 8px;
+            padding: 12px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .menu-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .item-price {
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .item-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .add-btn {
+            background-color: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .add-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .cart-section {
+            background-color: var(--white);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            position: sticky;
+            top: 20px;
+        }
+
+        .qr-scanner-container {
+            margin-bottom: 20px;
+        }
+
+        .scanner-toggle-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background-color 0.3s;
+        }
+
+        .scanner-toggle-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        #qr-reader {
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .cart-items {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .cart-item-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .cart-item-quantity {
+            width: 30px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .cart-item-price {
+            width: 70px;
+            text-align: right;
+            font-weight: 500;
+        }
+
+        .cart-item-actions {
+            display: flex;
+            gap: 5px;
+            margin-left: 10px;
+        }
+
+        .quantity-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-light);
+            transition: color 0.3s;
+        }
+
+        .quantity-btn:hover {
+            color: var(--primary);
+        }
+
+        .cart-summary {
+            border-top: 2px solid var(--gray-300);
+            padding-top: 15px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .summary-row.total {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-top: 10px;
+            color: var(--primary);
+        }
+
+        .send-order-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--success);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            margin-top: 15px;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background-color 0.3s;
+        }
+
+        .send-order-btn:hover {
+            background-color: #218838;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-success {
+            background-color: rgba(40, 167, 69, 0.1);
+            border: 1px solid rgba(40, 167, 69, 0.2);
+            color: var(--success);
+        }
+
+        .loader {
+            display: none;
+            width: 100%;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: var(--primary);
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Icon styles */
+        .icon {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">WaiterPro</div>
+            <div class="user-info">
+                <span>John Doe</span>
+                <div class="user-avatar">JD</div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="menu-section">
+                <h2 class="section-title">Menu</h2>
+                <div class="tab-container">
+                    <div class="tab active" data-category="all">All</div>
+                    <div class="tab" data-category="starters">Starters</div>
+                    <div class="tab" data-category="mains">Main Courses</div>
+                    <div class="tab" data-category="desserts">Desserts</div>
+                    <div class="tab" data-category="drinks">Drinks</div>
+                </div>
+                <div class="menu-items-container" id="menuItemsContainer">
+                    <!-- Menu items will be populated here -->
+                </div>
+                <div class="loader" id="menuLoader">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+
+            <div class="cart-section">
+                <h2 class="section-title">Order Cart</h2>
+                <div class="qr-scanner-container">
+                    <button class="scanner-toggle-btn" id="scannerToggleBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                        </svg>
+                        Scan QR Code
+                    </button>
+                    <div id="qr-reader"></div>
+                </div>
+
+                <div id="notification" style="display: none;"></div>
+
+                <div class="cart-items" id="cartItems">
+                    <!-- Cart items will be populated here -->
+                    <div class="empty-cart-message">Your cart is empty</div>
+                </div>
+
+                <div class="cart-summary">
+                    <div class="summary-row">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">$0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Tax (10%):</span>
+                        <span id="tax">$0.00</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Total:</span>
+                        <span id="total">$0.00</span>
+                    </div>
+                </div>
+
+                <button class="send-order-btn" id="sendOrderBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                    Send Order to Kitchen
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample menu data
+        const menuData = [
+            { id: 1, name: "Garlic Bread", price: 4.99, category: "starters" },
+            { id: 2, name: "Bruschetta", price: 6.99, category: "starters" },
+            { id: 3, name: "Mozzarella Sticks", price: 5.99, category: "starters" },
+            { id: 4, name: "Chicken Wings", price: 8.99, category: "starters" },
+            { id: 5, name: "Grilled Salmon", price: 18.99, category: "mains" },
+            { id: 6, name: "Fillet Steak", price: 22.99, category: "mains" },
+            { id: 7, name: "Vegetable Pasta", price: 14.99, category: "mains" },
+            { id: 8, name: "Chicken Alfredo", price: 16.99, category: "mains" },
+            { id: 9, name: "Margherita Pizza", price: 12.99, category: "mains" },
+            { id: 10, name: "Beef Burger", price: 13.99, category: "mains" },
+            { id: 11, name: "Chocolate Cake", price: 6.99, category: "desserts" },
+            { id: 12, name: "Cheesecake", price: 7.99, category: "desserts" },
+            { id: 13, name: "Ice Cream", price: 4.99, category: "desserts" },
+            { id: 14, name: "Apple Pie", price: 5.99, category: "desserts" },
+            { id: 15, name: "Soft Drink", price: 2.99, category: "drinks" },
+            { id: 16, name: "Coffee", price: 3.49, category: "drinks" },
+            { id: 17, name: "Tea", price: 2.99, category: "drinks" },
+            { id: 18, name: "Fresh Juice", price: 4.49, category: "drinks" }
+        ];
+
+        // DOM Elements
+        const menuItemsContainer = document.getElementById('menuItemsContainer');
+        const cartItemsContainer = document.getElementById('cartItems');
+        const subtotalEl = document.getElementById('subtotal');
+        const taxEl = document.getElementById('tax');
+        const totalEl = document.getElementById('total');
+        const tabs = document.querySelectorAll('.tab');
+        const scannerToggleBtn = document.getElementById('scannerToggleBtn');
+        const qrReader = document.getElementById('qr-reader');
+        const sendOrderBtn = document.getElementById('sendOrderBtn');
+        const notificationEl = document.getElementById('notification');
+        const menuLoader = document.getElementById('menuLoader');
+
+        // State
+        let cart = [];
+        let activeCategory = 'all';
+        let scannerActive = false;
+        let html5QrCode = null;
+
+        // Initialize the app
+        function initApp() {
+            renderMenuItems();
+            setupEventListeners();
+            updateCart();
+        }
+
+        // Render menu items based on selected category
+        function renderMenuItems() {
+            menuLoader.style.display = 'block';
+            menuItemsContainer.innerHTML = '';
+
+            setTimeout(() => {
+                const filteredItems = activeCategory === 'all' 
+                    ? menuData 
+                    : menuData.filter(item => item.category === activeCategory);
+
+                filteredItems.forEach(item => {
+                    const menuItemEl = document.createElement('div');
+                    menuItemEl.className = 'menu-item';
+                    menuItemEl.innerHTML = `
+                        <div class="item-info">
+                            <div class="item-name">${item.name}</div>
+                            <div class="item-price">$${item.price.toFixed(2)}</div>
+                        </div>
+                        <div class="item-actions">
+                            <button class="add-btn" data-id="${item.id}">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon" style="width: 20px; height: 20px;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                Add
+                            </button>
+                        </div>
+                    `;
+                    menuItemsContainer.appendChild(menuItemEl);
+                });
+
+                menuLoader.style.display = 'none';
+            }, 500); // Simulate loading
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Tab navigation
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    activeCategory = tab.dataset.category;
+                    renderMenuItems();
+                });
+            });
+
+            // Add to cart buttons
+            menuItemsContainer.addEventListener('click', (e) => {
+                const addBtn = e.target.closest('.add-btn');
+                if (addBtn) {
+                    const itemId = parseInt(addBtn.dataset.id);
+                    addToCart(itemId);
+                }
+            });
+
+            // Cart item quantity buttons
+            cartItemsContainer.addEventListener('click', (e) => {
+                const target = e.target.closest('button');
+                if (!target) return;
+
+                if (target.classList.contains('increase-btn')) {
+                    const itemId = parseInt(target.dataset.id);
+                    increaseQuantity(itemId);
+                } else if (target.classList.contains('decrease-btn')) {
+                    const itemId = parseInt(target.dataset.id);
+                    decreaseQuantity(itemId);
+                }
+            });
+
+            // QR Scanner toggle
+            scannerToggleBtn.addEventListener('click', toggleQRScanner);
+
+            // Send order button
+            sendOrderBtn.addEventListener('click', sendOrder);
+        }
+
+        // Toggle QR Scanner
+        function toggleQRScanner() {
+            if (scannerActive) {
+                stopQRScanner();
+                scannerToggleBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                    </svg>
+                    Scan QR Code
+                `;
+            } else {
+                startQRScanner();
+                scannerToggleBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Close Scanner
+                `;
+            }
+        }
+
+        // Start QR Scanner
+        function startQRScanner() {
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("qr-reader");
+            }
+
+            qrReader.style.display = 'block';
+            scannerActive = true;
+
+            const qrConfig = { fps: 10, qrbox: { width: 250, height: 250 } };
+            
+            html5QrCode.start(
+                { facingMode: "environment" },
+                qrConfig,
+                onQRCodeSuccess,
+                onQRCodeError
+            );
+        }
+
+        // Stop QR Scanner
+        function stopQRScanner() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().catch(err => console.error(err));
+            }
+            qrReader.style.display = 'none';
+            scannerActive = false;
+        }
+
+        // QR Code Success Handler
+        function onQRCodeSuccess(decodedText) {
+            try {
+                const qrData = JSON.parse(decodedText);
+                
+                // Handle different QR code types
+                if (qrData.type === 'menu-item') {
+                    addToCart(qrData.itemId);
+                } else if (qrData.type === 'order') {
+                    loadOrderFromQR(qrData.items);
+                }
+                
+                showNotification('QR code scanned successfully!', 'success');
+                stopQRScanner();
+            } catch (error) {
+                showNotification('Invalid QR code format', 'error');
+                console.error('QR code parsing error:', error);
+            }
+        }
+
+        // QR Code Error Handler
+        function onQRCodeError(err) {
+            // We don't need to display every error as it's scanning continuously
+            console.log('QR scanning in progress...');
+        }
+
+        // Load order from QR code
+        function loadOrderFromQR(items) {
+            cart = [];
+            
+            items.forEach(item => {
+                const menuItem = menuData.find(mi => mi.id === item.id);
+                if (menuItem) {
+                    cart.push({
+                        id: menuItem.id,
+                        name: menuItem.name,
+                        price: menuItem.price,
+                        quantity: item.quantity
+                    });
+                }
+            });
+            
+            updateCart();
+        }
+
+        // Add item to cart
+        function addToCart(itemId) {
+            const menuItem = menuData.find(item => item.id === itemId);
+            if (!menuItem) return;
+
+            const existingItem = cart.find(item => item.id === itemId);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({
+                    id: menuItem.id,
+                    name: menuItem.name,
+                    price: menuItem.price,
+                    quantity: 1
+                });
+            }
+            
+            updateCart();
+            showNotification(`${menuItem.name} added to cart`, 'success');
+        }
+
+        // Increase item quantity
+        function increaseQuantity(itemId) {
+            const item = cart.find(item => item.id === itemId);
+            if (item) {
+                item.quantity += 1;
+                updateCart();
+            }
+        }
+
+        // Decrease item quantity
+        function decreaseQuantity(itemId) {
+            const index = cart.findIndex(item => item.id === itemId);
+            if (index !== -1) {
+                if (cart[index].quantity > 1) {
+                    cart[index].quantity -= 1;
+                } else {
+                    cart.splice(index, 1);
+                }
+                updateCart();
+            }
+        }
+
+        // Update cart display and totals
+        function updateCart() {
+            if (cart.length === 0) {
+                cartItemsContainer.innerHTML = '<div class="empty-cart-message">Your cart is empty</div>';
+            } else {
+                cartItemsContainer.innerHTML = '';
+                
+                cart.forEach(item => {
+                    const cartItemEl = document.createElement('div');
+                    cartItemEl.className = 'cart-item';
+                    cartItemEl.innerHTML = `
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-quantity">${item.quantity}</div>
+                        <div class="cart-item-price">$${(item.price * item.quantity).toFixed(2)}</div>
+                        <div class="cart-item-actions">
+                            <button class="quantity-btn decrease-btn" data-id="${item.id}">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 12H6" />
+                                </svg>
+                            </button>
+                            <button class="quantity-btn increase-btn" data-id="${item.id}">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+                    cartItemsContainer.appendChild(cartItemEl);
+                });
+            }
+            
+            // Calculate totals
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const tax = subtotal * 0.1; // 10% tax
+            const total = subtotal + tax;
+            
+            // Update display
+            subtotalEl.textContent = `$${subtotal.toFixed(2)}`;
+            taxEl.textContent = `$${tax.toFixed(2)}`;
+            totalEl.textContent = `$${total.toFixed(2)}`;
+            
+            // Sync with owner's page
+            syncWithOwnerPage();
+        }
+
+        // Send order to kitchen
+        function sendOrder() {
+            if (cart.length === 0) {
+                showNotification('Cannot send empty order', 'error');
+                return;
+            }
+            
+            // Show loading state
+            sendOrderBtn.disabled = true;
+            sendOrderBtn.innerHTML = `
+                <div class="spinner" style="width: 20px; height: 20px;"></div>
+                Sending...
+            `;
+            
+            // Simulate sending order to server
+            setTimeout(() => {
+                // Reset loading state
+                sendOrderBtn.disabled = false;
+                sendOrderBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                    Send Order to Kitchen
+                `;
+                
+                showNotification('Order sent successfully!', 'success');
+                
+                // Clear cart after successful submission
+                cart = [];
+                updateCart();
+                
+                // Send final update to owner's page
+                syncWithOwnerPage('completed');
+            }, 2000);
+        }
+
+        // Sync cart data with owner's page
+        function syncWithOwnerPage(status = 'active') {
+            // In a real application, this would use WebSockets or server-sent events
+            // For demo purposes, we'll simulate by logging to console
+            const ownerData = {
+                waiterId: "WTR-001",
+                waiterName: "John Doe",
+                tableNumber: 5,
+                status: status,
+                timestamp: new Date().toISOString(),
+                items: cart.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity,
+                    subtotal: item.price * item.quantity
+                })),
+                totals: {
+                    subtotal: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+                    tax: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 0.1,
+                    total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 1.1
+                }
+            };
+            
+            console.log('Syncing with owner page:', ownerData);
+            
+            // In a real app, you would send this data to the server
+            // For example:
+            // fetch('https://your-api.com/update-order', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify(ownerData)
+            // });
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            notificationEl.innerHTML = `
+                <div class="alert alert-${type}">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon" style="width: 20px; height: 20px;">
+                        ${type === 'success' 
+                            ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />'
+                            : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />'}
+                    </svg>
+                    ${message}
+                </div>
+            `;
+            notificationEl.style.display = 'block';
+            
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                notificationEl.style.display = 'none';
+            }, 3000);
+        }
+
+        // Generate QR code for a menu item (for testing)
+        function generateMenuItemQR(itemId) {
+            const qrData = {
+                type: 'menu-item',
+                itemId: itemId,
+                timestamp: new Date().toISOString()
+            };
+            return JSON.stringify(qrData);
+        }
+
+        // Generate QR code for an order (for testing)
+        function generateOrderQR(items) {
+            const qrData = {
+                type: 'order',
+                items: items,
+                timestamp: new Date().toISOString()
+            };
+            return JSON.stringify(qrData);
+        }
+
+        // Test function to simulate scanning a menu item QR code
+        function testScanMenuItemQR(itemId) {
+            const qrData = generateMenuItemQR(itemId);
+            onQRCodeSuccess(qrData);
+        }
+
+        // Test function to simulate scanning an order QR code
+        function testScanOrderQR() {
+            const testOrder = [
+                { id: 1, quantity: 2 },
+                { id: 5, quantity: 1 },
+                { id: 15, quantity: 3 }
+            ];
+            const qrData = generateOrderQR(testOrder);
+            onQRCodeSuccess(qrData);
+        }
+
+        // Initialize the app when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
