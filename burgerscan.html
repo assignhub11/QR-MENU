@@ -3,115 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Code Scanner</title>
+    <title>Waiter's Scanner</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f7fafc;
+            background-color: #f4f4f4;
             margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
+            padding: 20px;
+            text-align: center;
         }
-
         h1 {
-            color: #2d3748;
-            margin-bottom: 20px;
+            color: #333;
         }
-
         #scanner-container {
+            margin: 20px auto;
             width: 300px;
             height: 300px;
-            border: 2px solid #2ec4b6;
-            border-radius: 10px;
-            overflow: hidden;
+            border: 2px solid #ccc;
             position: relative;
-            margin-bottom: 20px;
         }
-
         #scanner-video {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-
         #scanner-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #00ff00;
+            box-sizing: border-box;
         }
-
-        #scanner-overlay p {
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        #cart-items {
-            width: 100%;
-            max-width: 400px;
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .cart-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .cart-item:last-child {
-            border-bottom: none;
-        }
-
-        .cart-item span {
-            font-size: 16px;
-            color: #4a5568;
-        }
-
-        .cart-total {
-            font-weight: bold;
-            font-size: 18px;
+        #scanned-items {
             margin-top: 20px;
-            text-align: right;
+            text-align: left;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .item {
+            background: #fff;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .item h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+        .item p {
+            margin: 5px 0;
+            color: #555;
         }
     </style>
 </head>
 <body>
-    <h1>Scan QR Code</h1>
+    <h1>Waiter's QR Scanner</h1>
     <div id="scanner-container">
         <video id="scanner-video"></video>
-        <div id="scanner-overlay">
-            <p>Scanning...</p>
-        </div>
+        <div id="scanner-overlay"></div>
     </div>
-    <div id="cart-items">
-        <!-- Cart items will be displayed here -->
+    <div id="scanned-items">
+        <p>Scanned items will appear here.</p>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
     <script>
+        // Get elements
         const video = document.getElementById('scanner-video');
-        const cartItemsContainer = document.getElementById('cart-items');
+        const scannedItemsContainer = document.getElementById('scanned-items');
 
-        // Access the camera and start scanning
+        // Function to start the camera and scan QR code
         async function startScanner() {
             try {
+                // Request camera access
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
                 video.srcObject = stream;
                 video.play();
+
+                // Scan for QR code
                 requestAnimationFrame(scanQRCode);
             } catch (error) {
                 console.error("Error accessing camera:", error);
@@ -119,51 +92,51 @@
             }
         }
 
-        // Function to scan the QR code
+        // Function to scan QR code
         function scanQRCode() {
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const context = canvas.getContext('2d');
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, imageData.width, imageData.height);
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "dontInvert",
+                });
 
-            if (code) {
-                // Parse the QR code data
-                const cartData = JSON.parse(code.data);
-                displayCartItems(cartData);
+                if (code) {
+                    // QR code detected
+                    const scannedData = JSON.parse(code.data);
+                    displayScannedItems(scannedData.items);
+                } else {
+                    // No QR code detected, continue scanning
+                    requestAnimationFrame(scanQRCode);
+                }
             } else {
                 requestAnimationFrame(scanQRCode);
             }
         }
 
-        // Function to display cart items
-        function displayCartItems(cartData) {
-            cartItemsContainer.innerHTML = '';
-
-            if (cartData.items.length === 0) {
-                cartItemsContainer.innerHTML = '<p>No items in the cart.</p>';
+        // Function to display scanned items
+        function displayScannedItems(items) {
+            scannedItemsContainer.innerHTML = '<h2>Scanned Items:</h2>';
+            if (items.length === 0) {
+                scannedItemsContainer.innerHTML += '<p>No items found in the QR code.</p>';
                 return;
             }
 
-            // Display each item
-            cartData.items.forEach(item => {
+            items.forEach(item => {
                 const itemDiv = document.createElement('div');
-                itemDiv.classList.add('cart-item');
+                itemDiv.className = 'item';
                 itemDiv.innerHTML = `
-                    <span>${item.name}</span>
-                    <span>₹${(item.price * item.quantity).toFixed(2)}</span>
+                    <h3>${item.name}</h3>
+                    <p>Price: ₹${item.price}</p>
+                    <p>Quantity: ${item.quantity}</p>
                 `;
-                cartItemsContainer.appendChild(itemDiv);
+                scannedItemsContainer.appendChild(itemDiv);
             });
-
-            // Display total
-            const totalDiv = document.createElement('div');
-            totalDiv.classList.add('cart-total');
-            totalDiv.innerHTML = `Total: ₹${cartData.total}`;
-            cartItemsContainer.appendChild(totalDiv);
         }
 
         // Start the scanner when the page loads
