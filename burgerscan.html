@@ -1,557 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delicious Eats - Order Scanner</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.4/html5-qrcode.min.js"></script>
+    <title>QR Code Scanner</title>
     <style>
-        :root {
-            --primary-color: #ff6b35;
-            --primary-dark: #e85d2c;
-            --primary-light: #ff8c5f;
-            --secondary-color: #2ec4b6;
-            --accent-color: #ff9f1c;
-            --text-color: #2d3748;
-            --text-light: #4a5568;
-            --light-bg: #f7fafc;
-            --white: #ffffff;
-            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            --card-radius: 16px;
-            --button-radius: 12px;
-            --font-main: 'Poppins', 'Segoe UI', sans-serif;
-            --font-headings: 'Montserrat', 'Segoe UI', sans-serif;
-        }
-
-        * {
-            box-sizing: border-box;
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7fafc;
             margin: 0;
             padding: 0;
-        }
-
-        body {
-            font-family: var(--font-main);
-            background-color: var(--light-bg);
-            color: var(--text-color);
-            line-height: 1.6;
-        }
-
-        /* Header Styles */
-        header {
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-            color: var(--white);
-            padding: 18px 24px;
-            box-shadow: var(--shadow);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .logo-icon {
-            font-size: 28px;
-            filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2));
-            animation: pulse 2s infinite alternate;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.1); }
+            justify-content: center;
+            height: 100vh;
         }
 
         h1 {
-            font-family: var(--font-headings);
-            font-size: 26px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 30px auto;
-            padding: 20px;
-        }
-
-        .card {
-            background-color: var(--white);
-            border-radius: var(--card-radius);
-            box-shadow: var(--shadow);
-            padding: 20px;
-            margin-bottom: 30px;
-        }
-
-        .card-title {
-            font-family: var(--font-headings);
-            font-size: 22px;
+            color: #2d3748;
             margin-bottom: 20px;
-            color: var(--text-color);
-            padding-bottom: 10px;
-            border-bottom: 2px solid var(--primary-light);
         }
 
-        #qr-reader {
+        #scanner-container {
+            width: 300px;
+            height: 300px;
+            border: 2px solid #2ec4b6;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        #scanner-video {
             width: 100%;
-            margin: 0 auto;
+            height: 100%;
+            object-fit: cover;
         }
 
-        #start-scanner-btn, #stop-scanner-btn {
-            background-color: var(--primary-color);
-            color: var(--white);
-            border: none;
-            padding: 12px 25px;
-            border-radius: var(--button-radius);
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 20px;
-            font-family: var(--font-main);
-            font-size: 16px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        #stop-scanner-btn {
-            background-color: #e53e3e;
-            margin-left: 10px;
-        }
-
-        #start-scanner-btn:hover, #stop-scanner-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        #start-scanner-btn:hover {
-            background-color: var(--primary-dark);
-        }
-
-        #stop-scanner-btn:hover {
-            background-color: #c53030;
-        }
-
-        #order-details {
-            margin-top: 30px;
-            display: none;
-        }
-
-        .order-header {
+        #scanner-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.5);
         }
 
-        .order-timestamp {
-            font-size: 14px;
-            color: var(--text-light);
-        }
-
-        .item-list {
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
-            padding-top: 15px;
-        }
-
-        .order-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-        }
-
-        .item-name {
-            font-weight: 500;
-        }
-
-        .item-price {
-            color: var(--text-light);
-        }
-
-        .item-quantity {
-            background-color: var(--primary-light);
-            color: var(--white);
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 14px;
-            margin-left: 10px;
-        }
-
-        .order-total {
-            display: flex;
-            justify-content: space-between;
-            font-weight: bold;
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 2px solid var(--primary-light);
+        #scanner-overlay p {
+            color: white;
             font-size: 18px;
+            font-weight: bold;
         }
 
-        .action-buttons {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 20px;
-        }
-
-        .accept-order, .reject-order {
-            padding: 10px 20px;
-            border: none;
-            border-radius: var(--button-radius);
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-left: 10px;
-            font-family: var(--font-main);
-        }
-
-        .accept-order {
-            background-color: var(--secondary-color);
-            color: var(--white);
-        }
-
-        .reject-order {
-            background-color: #e53e3e;
-            color: var(--white);
-        }
-
-        .accept-order:hover, .reject-order:hover {
-            transform: translateY(-2px);
+        #cart-items {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        .status-badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            margin-top: 15px;
-            text-align: center;
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
         }
 
-        .status-success {
-            background-color: #c6f6d5;
-            color: #22543d;
+        .cart-item:last-child {
+            border-bottom: none;
         }
 
-        .status-error {
-            background-color: #fed7d7;
-            color: #822727;
+        .cart-item span {
+            font-size: 16px;
+            color: #4a5568;
         }
 
-        /* Notification */
-        .notification {
-            position: fixed;
-            top: -100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: var(--secondary-color);
-            color: white;
-            padding: 14px 28px;
-            border-radius: 50px;
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
-            z-index: 1001;
-            transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            font-weight: 600;
-            font-family: var(--font-main);
-            font-size: 15px;
-        }
-
-        .notification.show {
-            top: 20px;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-                margin: 20px auto;
-            }
-
-            h1 {
-                font-size: 22px;
-            }
-
-            .card-title {
-                font-size: 20px;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-            }
-
-            .accept-order, .reject-order {
-                margin: 5px 0;
-                width: 100%;
-            }
-
-            #start-scanner-btn, #stop-scanner-btn {
-                width: 100%;
-                margin: 10px 0;
-            }
+        .cart-total {
+            font-weight: bold;
+            font-size: 18px;
+            margin-top: 20px;
+            text-align: right;
         }
     </style>
 </head>
-
 <body>
-    <header>
-        <div class="logo">
-            <span class="logo-icon">🍔</span>
-            <h1>Delicious Eats - Order Scanner</h1>
-        </div>
-    </header>
-
-    <div class="container">
-        <div class="card">
-            <h2 class="card-title">QR Code Scanner</h2>
-            <p>Scan a customer order QR code to view their cart items.</p>
-            <div class="scanner-controls">
-                <button id="start-scanner-btn">Start Scanner</button>
-                <button id="stop-scanner-btn" style="display: none;">Stop Scanner</button>
-            </div>
-            <div id="qr-reader"></div>
-        </div>
-
-        <div id="order-details" class="card">
-            <h2 class="card-title">Order Details</h2>
-            <div class="order-header">
-                <h3>Customer Order</h3>
-                <span class="order-timestamp" id="order-time"></span>
-            </div>
-            <div class="item-list" id="item-list">
-                <!-- Order items will be displayed here -->
-            </div>
-            <div class="order-total">
-                <span>Total Amount:</span>
-                <span id="order-total-amount">₹0</span>
-            </div>
-            <div class="action-buttons">
-                <button class="reject-order" onclick="rejectOrder()">Reject Order</button>
-                <button class="accept-order" onclick="acceptOrder()">Accept Order</button>
-            </div>
-            <div id="order-status"></div>
+    <h1>Scan QR Code</h1>
+    <div id="scanner-container">
+        <video id="scanner-video"></video>
+        <div id="scanner-overlay">
+            <p>Scanning...</p>
         </div>
     </div>
+    <div id="cart-items">
+        <!-- Cart items will be displayed here -->
+    </div>
 
-    <div class="notification" id="notification">Notification message</div>
-
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script>
-        // Global variables
-        let html5QrcodeScanner;
-        let currentOrder = null;
-        let isScanning = false;
+        const video = document.getElementById('scanner-video');
+        const cartItemsContainer = document.getElementById('cart-items');
 
-        // Initialize on DOM load
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set up event listeners
-            document.getElementById('start-scanner-btn').addEventListener('click', startScanner);
-            document.getElementById('stop-scanner-btn').addEventListener('click', stopScanner);
-        });
-
-        // Function to start the QR scanner
-        function startScanner() {
-            if (isScanning) return;
-            
-            // Configuration for the scanner
-            const config = {
-                fps: 10,
-                qrbox: { width: 250, height: 250 },
-                rememberLastUsedCamera: true,
-                aspectRatio: 1.0
-            };
-            
-            // Clear previous scanner if exists
-            if (html5QrcodeScanner) {
-                html5QrcodeScanner.clear();
-            }
-
-            // Create new scanner instance
-            html5QrcodeScanner = new Html5QrCode("qr-reader");
-            
-            // Success callback
-            const qrCodeSuccessCallback = (decodedText, decodedResult) => {
-                // Stop scanner after successful scan
-                stopScanner();
-                
-                // Process the decoded QR data
-                processQRData(decodedText);
-            };
-
-            // Start camera with user's permission
-            html5QrcodeScanner.start(
-                { facingMode: "environment" }, 
-                config,
-                qrCodeSuccessCallback,
-                (errorMessage) => {
-                    // Handle errors
-                    if (errorMessage.includes('camera capabilities')) {
-                        showNotification("Camera error. Please check permissions.");
-                    }
-                }
-            ).then(() => {
-                isScanning = true;
-                // Update UI
-                document.getElementById('start-scanner-btn').style.display = 'none';
-                document.getElementById('stop-scanner-btn').style.display = 'inline-block';
-                showNotification("Scanner started");
-            }).catch(err => {
-                showNotification("Failed to start scanner: " + err);
-            });
-        }
-
-        // Function to stop the QR scanner
-        function stopScanner() {
-            if (!isScanning || !html5QrcodeScanner) return;
-            
-            html5QrcodeScanner.stop().then(() => {
-                isScanning = false;
-                // Update UI
-                document.getElementById('start-scanner-btn').style.display = 'inline-block';
-                document.getElementById('stop-scanner-btn').style.display = 'none';
-            }).catch(err => {
-                console.error("Error stopping scanner:", err);
-            });
-        }
-
-        // Process QR data
-        function processQRData(decodedText) {
+        // Access the camera and start scanning
+        async function startScanner() {
             try {
-                // Parse the JSON data from QR code
-                const orderData = JSON.parse(decodedText);
-                
-                // Validate order data structure
-                if (!orderData.items || !orderData.total || !orderData.timestamp) {
-                    throw new Error("Invalid order data format");
-                }
-                
-                // Store current order
-                currentOrder = orderData;
-                
-                // Display the order details
-                displayOrderDetails(orderData);
-                
-                showNotification("Order scanned successfully");
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                video.srcObject = stream;
+                video.play();
+                requestAnimationFrame(scanQRCode);
             } catch (error) {
-                console.error("Error processing QR data:", error);
-                showNotification("Invalid QR code format");
-                
-                // Clear order details
-                document.getElementById('order-details').style.display = 'none';
-                currentOrder = null;
+                console.error("Error accessing camera:", error);
+                alert("Unable to access camera. Please allow camera permissions.");
             }
         }
 
-        // Display order details
-        function displayOrderDetails(orderData) {
-            // Show order details section
-            const orderDetailsElement = document.getElementById('order-details');
-            orderDetailsElement.style.display = 'block';
-            
-            // Format timestamp
-            const orderDate = new Date(orderData.timestamp);
-            document.getElementById('order-time').textContent = formatDateTime(orderDate);
-            
-            // Clear previous items
-            const itemListElement = document.getElementById('item-list');
-            itemListElement.innerHTML = '';
-            
-            // Add each item to the list
-            orderData.items.forEach(item => {
-                const itemElement = document.createElement('div');
-                itemElement.classList.add('order-item');
-                
-                const itemSubtotal = (item.price * item.quantity).toFixed(2);
-                
-                itemElement.innerHTML = `
-                    <div>
-                        <span class="item-name">${item.name}</span>
-                        <span class="item-quantity">x${item.quantity}</span>
-                    </div>
-                    <span class="item-price">₹${itemSubtotal}</span>
+        // Function to scan the QR code
+        function scanQRCode() {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+            if (code) {
+                // Parse the QR code data
+                const cartData = JSON.parse(code.data);
+                displayCartItems(cartData);
+            } else {
+                requestAnimationFrame(scanQRCode);
+            }
+        }
+
+        // Function to display cart items
+        function displayCartItems(cartData) {
+            cartItemsContainer.innerHTML = '';
+
+            if (cartData.items.length === 0) {
+                cartItemsContainer.innerHTML = '<p>No items in the cart.</p>';
+                return;
+            }
+
+            // Display each item
+            cartData.items.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.classList.add('cart-item');
+                itemDiv.innerHTML = `
+                    <span>${item.name}</span>
+                    <span>₹${(item.price * item.quantity).toFixed(2)}</span>
                 `;
-                
-                itemListElement.appendChild(itemElement);
+                cartItemsContainer.appendChild(itemDiv);
             });
-            
-            // Update total
-            document.getElementById('order-total-amount').textContent = `₹${orderData.total}`;
-            
-            // Reset status
-            document.getElementById('order-status').innerHTML = '';
+
+            // Display total
+            const totalDiv = document.createElement('div');
+            totalDiv.classList.add('cart-total');
+            totalDiv.innerHTML = `Total: ₹${cartData.total}`;
+            cartItemsContainer.appendChild(totalDiv);
         }
 
-        // Accept order function
-        function acceptOrder() {
-            if (!currentOrder) return;
-            
-            // Here you would typically send the order to your backend system
-            // For this demo, we'll just show a success message
-            
-            const statusElement = document.getElementById('order-status');
-            statusElement.innerHTML = `
-                <div class="status-badge status-success">
-                    Order accepted! The kitchen will start preparing the order.
-                </div>
-            `;
-            
-            showNotification("Order accepted");
-            
-            // Disable action buttons
-            document.querySelectorAll('.action-buttons button').forEach(btn => {
-                btn.disabled = true;
-                btn.style.opacity = '0.5';
-            });
-        }
-
-        // Reject order function
-        function rejectOrder() {
-            if (!currentOrder) return;
-            
-            const statusElement = document.getElementById('order-status');
-            statusElement.innerHTML = `
-                <div class="status-badge status-error">
-                    Order rejected. Customer will need to place a new order.
-                </div>
-            `;
-            
-            showNotification("Order rejected");
-            
-            // Disable action buttons
-            document.querySelectorAll('.action-buttons button').forEach(btn => {
-                btn.disabled = true;
-                btn.style.opacity = '0.5';
-            });
-        }
-
-        // Format date and time
-        function formatDateTime(date) {
-            const options = { 
-                year: 'numeric', 
-                month: 'short', 
-                day: 'numeric', 
-                hour: '2-digit', 
-                minute: '2-digit'
-            };
-            
-            return date.toLocaleString('en-US', options);
-        }
-
-        // Show notification
-        function showNotification(message) {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
+        // Start the scanner when the page loads
+        startScanner();
     </script>
 </body>
 </html>
