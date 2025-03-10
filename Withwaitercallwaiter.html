@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delicious Eats - Waiter Dashboard</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --primary-color: #ff6b35;
+            --primary-dark: #e85d2c;
+            --primary-light: #ff8c5f;
+            --secondary-color: #2ec4b6;
+            --accent-color: #ff9f1c;
+            --text-color: #2d3748;
+            --text-light: #4a5568;
+            --light-bg: #f7fafc;
+            --white: #ffffff;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --card-radius: 16px;
+            --button-radius: 12px;
+            --font-main: 'Poppins', 'Segoe UI', sans-serif;
+            --font-headings: 'Montserrat', 'Segoe UI', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            line-height: 1.6;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, var(--secondary-color), #259c90);
+            color: var(--white);
+            padding: 18px 24px;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            font-size: 28px;
+            filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2));
+        }
+
+        h1 {
+            font-family: var(--font-headings);
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 992px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            padding: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-family: var(--font-headings);
+            margin-bottom: 16px;
+            color: var(--text-color);
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-icon {
+            font-size: 24px;
+        }
+
+        #reader {
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 12px 20px;
+            border-radius: var(--button-radius);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 16px;
+            font-family: var(--font-main);
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #25a99d;
+        }
+
+        .btn-accent {
+            background-color: var(--accent-color);
+        }
+
+        .btn-accent:hover {
+            background-color: #e78c10;
+        }
+
+        .calls-list {
+            max-height: 350px;
+            overflow-y: auto;
+            margin-top: 16px;
+        }
+
+        .waiter-call {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            margin-bottom: 12px;
+            background-color: #fff1e6;
+            border-left: 4px solid var(--accent-color);
+            border-radius: 8px;
+            transition: all 0.3s;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .waiter-call.completed {
+            background-color: #f0fff4;
+            border-left-color: #48bb78;
+            opacity: 0.7;
+        }
+
+        .waiter-call-new {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .table-info {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .time-info {
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        .call-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .order-details {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .order-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .item-name {
+            font-weight: 600;
+        }
+
+        .item-price {
+            color: var(--text-light);
+            font-size: 14px;
+        }
+
+        .item-quantity {
+            background-color: var(--primary-light);
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .order-total {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            padding: 16px 12px;
+            margin-top: 10px;
+            border-top: 2px solid rgba(0, 0, 0, 0.05);
+            font-size: 18px;
+        }
+
+        .notification {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 14px 28px;
+            border-radius: 50px;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-weight: 600;
+            font-family: var(--font-main);
+            font-size: 15px;
+        }
+
+        .notification.show {
+            top: 20px;
+        }
+
+        /* Sound toggle switch */
+        .sound-toggle {
+            display: flex;
+            align-items: center;
+            margin-left: 20px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+
+        input:focus + .slider {
+            box-shadow: 0 0 1px var(--primary-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .sound-label {
+            margin-left: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo">
+            <span class="logo-icon">👨‍🍳</span>
+            <h1>Delicious Eats - Waiter Dashboard</h1>
+        </div>
+        <div class="sound-toggle">
+            <label class="switch">
+                <input type="checkbox" id="sound-toggle" checked>
+                <span class="slider"></span>
+            </label>
+            <span class="sound-label">Sound</span>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <div class="card">
+            <h2 class="card-title">
+                <span class="card-icon">📞</span>
+                Waiter Calls
+            </h2>
+            <button class="btn btn-secondary" onclick="refreshWaiterCalls()">Refresh Calls</button>
+            <div id="calls-list" class="calls-list">
+                <!-- Waiter calls will be loaded here -->
+                <div style="text-align: center; padding: 20px; color: var(--text-light);">
+                    Loading waiter calls...
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">
+                <span class="card-icon">📱</span>
+                QR Code Scanner
+            </h2>
+            <div id="reader"></div>
+            <p style="margin-top: 15px; text-align: center; color: var(--text-light);">
+                Scan a customer's QR code to view their order details
+            </p>
+            
+            <div id="order-details" class="order-details">
+                <h3 style="margin-bottom: 15px;">Order Details</h3>
+                <div class="table-info" style="margin-bottom: 10px;">
+                    <span>Table: </span>
+                    <span id="order-table">--</span>
+                </div>
+                <div id="order-items">
+                    <!-- Order items will be displayed here -->
+                </div>
+                <div id="order-total" class="order-total">
+                    <span>Total:</span>
+                    <span>₹0.00</span>
+                </div>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 15px;" onclick="confirmOrder()">
+                    Confirm Order
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">Notification message</div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCkPeO_08YnpAeyFRlAljffjXc-J1bfVuY",
+            authDomain: "onlinemenuproject.firebaseapp.com",
+            projectId: "onlinemenuproject",
+            storageBucket: "onlinemenuproject.appspot.com",
+            messagingSenderId: "463414061066",
+            appId: "1:463414061066:web:8b3c14f4603083769fd7f3",
+            measurementId: "G-8LWQ60TSKT"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const waiterCallsCollection = db.collection('waiterCalls');
+
+        // Audio for waiter calls
+        const callAudio = new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_c8a61baf95.mp3?filename=bell-ring-01-118100.mp3');
+        let soundEnabled = true;
+
+        // HTML5 QR scanner
+        let html5QrcodeScanner;
+        let currentOrder = null;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize QR Scanner
+            initQRScanner();
+            
+            // Load waiter calls
+            loadWaiterCalls();
+            
+            // Set up real-time listener for new waiter calls
+            setupWaiterCallsListener();
+            
+            // Initialize sound toggle
+            document.getElementById('sound-toggle').addEventListener('change', function() {
+                soundEnabled = this.checked;
+                showNotification(soundEnabled ? "Sound enabled" : "Sound disabled");
+            });
+        });
+
+        // Initialize QR scanner
+        function initQRScanner() {
+            html5QrcodeScanner = new Html5QrcodeScanner(
+                "reader", 
+                { 
+                    fps: 10, 
+                    qrbox: 250,
+                    rememberLastUsedCamera: true,
+                    aspectRatio: 1.0
+                }
+            );
+            
+            html5QrcodeScanner.render(onScanSuccess);
+        }
+
+        // Handle successful QR scan
+        function onScanSuccess(decodedText) {
+            try {
+                // Parse QR code data
+                const orderData = JSON.parse(decodedText);
+                
+                // Display order details
+                displayOrderDetails(orderData);
+                
+                // Play sound for successful scan
+                if (soundEnabled) {
+                    new Audio('https://cdn.pixabay.com/download/audio/2022/03/10/audio_8cb749d472.mp3?filename=success-1-6297.mp3').play();
+                }
+                
+                showNotification("Order scanned successfully");
+                
+            } catch (error) {
+                console.error("Error processing QR code:", error);
+                showNotification("Invalid QR code format");
+            }
+        }
+
+        // Display order details
+        function displayOrderDetails(orderData) {
+            currentOrder = orderData;
+            
+            // Show order details section
+            const orderDetailsEl = document.getElementById('order-details');
+            orderDetailsEl.style.display = 'block';
+            
+            // Set table number
+            document.getElementById('order-table').textContent = orderData.tableNumber || 'N/A';
+            
+            // Display order items
+            const orderItemsEl = document.getElementById('order-items');
+            orderItemsEl.innerHTML = '';
+            
+            orderData.items.forEach(item => {
+                const itemEl = document.createElement('div');
+                itemEl.classList.add('order-item');
+                itemEl.innerHTML = `
+                    <div class="item-details">
+                        <span class="item-name">${item.name}</span>
+                        <span class="item-price">₹${item.price}</span>
+                    </div>
+                    <div class="item-quantity">${item.quantity}</div>
+                `;
+                orderItemsEl.appendChild(itemEl);
+            });
+            
+            // Set total
+            const totalEl = document.getElementById('order-total');
+            totalEl.innerHTML = `
+                <span>Total:</span>
+                <span>₹${orderData.total || '0.00'}</span>
+            `;
+        }
+
+        // Load waiter calls
+        function loadWaiterCalls() {
+            const callsListEl = document.getElementById('calls-list');
+            callsListEl.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-light);">Loading waiter calls...</div>';
+            
+            waiterCallsCollection.orderBy('timestamp', 'desc').limit(20)
+                .get()
+                .then((querySnapshot) => {
+                    if (querySnapshot.empty) {
+                        callsListEl.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-light);">No waiter calls found</div>';
+                        return;
+                    }
+                    
+                    callsListEl.innerHTML = '';
+                    
+                    querySnapshot.forEach((doc) => {
+                        const callData = doc.data();
+                        addCallToList(doc.id, callData);
+                    });
+                })
+                .catch((error) => {
+                    console.error("Error loading waiter calls: ", error);
+                    callsListEl.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-light);">Error loading waiter calls</div>';
+                });
+        }
+
+        // Set up real-time listener for new waiter calls
+        function setupWaiterCallsListener() {
+            waiterCallsCollection
+                .orderBy('timestamp', 'desc')
+                .limit(1)
+                .onSnapshot((snapshot) => {
+                    snapshot.docChanges().forEach((change) => {
+                        if (change.type === 'added') {
+                            const callData = change.doc.data();
+                            
+                            // Only handle new calls (within the last minute)
+                            const callTime = callData.timestamp?.toDate() || new Date();
+                            const now = new Date();
+                            const diffInSeconds = (now - callTime) / 1000;
+                            
+                            if (diffInSeconds < 60) {
+                                // Add call to the list
+                                addCallToList(change.doc.id, callData, true);
+                                
+                                // Play audio if enabled
+                                if (soundEnabled) {
+                                    callAudio.play();
+                                }
+                                
+                                // Show notification
+                                showNotification(`New waiter call for Table ${callData.tableNumber}`);
+                            }
+                        }
+                    });
+                });
+        }
+
+        // Add call to the list
+        function addCallToList(callId, callData, isNew = false) {
+            const callsListEl = document.getElementById('calls-list');
+            
+            // Create call element
+            const callEl = document.createElement('div');
+            callEl.classList.add('waiter-call');
+            if (callData.completed) {
+                callEl.classList.add('completed');
+            }
+            if (isNew) {
+                callEl.classList.add('waiter-call-new');
+            }
+            
+            // Format time
+            const callTime = callData.timestamp?.toDate() || new Date();
+            const timeStr = callTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const dateStr = callTime.toLocaleDateString();
+            
+            // Set call content
+            callEl.innerHTML = `
+                <div>
+                    <div class="table-info">Table ${callData.tableNumber || 'N/A'}</div>
+                    <div class="time-info">${timeStr} | ${dateStr}</div>
+                </div>
+                <div class="call-actions">
+                    <button class="btn btn-secondary" onclick="completeCall('${callId}')">
+                        Complete
+                    </button>
+                </div>
+            `;
+            
+            // Add to list (at the beginning)
+            if (callsListEl.firstChild) {
+                callsListEl.insertBefore(callEl, callsListEl.firstChild);
+            } else {
+                callsListEl.appendChild(callEl);
+            }
+        }
+
+        // Complete a waiter call
+        function completeCall(callId) {
+            waiterCallsCollection.doc(callId).update({
+                completed: true,
+                completedAt: firebase.firestore.FieldValue.serverTimestamp()
+            })
+            .then(() => {
+                // Update UI
+                const callEl = document.querySelector(`[data-call-id="${callId}"]`);
+                if (callEl) {
+                    callEl.classList.add('completed');
+                }
+                
+                showNotification("Call marked as completed");
+                
+                // Refresh calls list
+                loadWaiterCalls();
+            })
+            .catch((error) => {
+                console.error("Error completing call: ", error);
+                showNotification("Error completing call");
+            });
+        }
+
+        // Refresh waiter calls
+        function refreshWaiterCalls() {
+            loadWaiterCalls();
+            showNotification("Waiter calls refreshed");
+        }
+
+        // Confirm scanned order
+        function confirmOrder() {
+            if (!currentOrder) {
+                showNotification("No order to confirm");
+                return;
+            }
+            
+            showNotification("Order confirmed!");
+            
+            // Here you would typically process the order in your system
+            // For demonstration, we'll just close the order details
+            document.getElementById('order-details').style.display = 'none';
+            currentOrder = null;
+        }
+
+        // Show notification
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
