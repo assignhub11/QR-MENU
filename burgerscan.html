@@ -4,16 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Waiter's Scanner</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
             text-align: center;
-        }
-        h1 {
-            color: #333;
+            padding: 20px;
         }
         #scanner-container {
             margin: 20px auto;
@@ -26,15 +22,6 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-        }
-        #scanner-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: 2px solid #00ff00;
-            box-sizing: border-box;
         }
         #scanned-items {
             margin-top: 20px;
@@ -50,27 +37,17 @@
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
-        .item h3 {
-            margin: 0;
-            font-size: 18px;
-        }
-        .item p {
-            margin: 5px 0;
-            color: #555;
-        }
     </style>
 </head>
 <body>
     <h1>Waiter's QR Scanner</h1>
     <div id="scanner-container">
         <video id="scanner-video"></video>
-        <div id="scanner-overlay"></div>
     </div>
     <div id="scanned-items">
         <p>Scanned items will appear here.</p>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
     <script>
         // Get elements
         const video = document.getElementById('scanner-video');
